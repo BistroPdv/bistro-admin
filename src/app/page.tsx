@@ -1,103 +1,89 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+// Esquema de validação com Zod
+const loginSchema = z.object({
+  login: z.string().min(1, "O login é obrigatório"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
+  cnpj: z
+    .string()
+    .regex(/^\d{14}$/, "O CNPJ deve conter exatamente 14 dígitos"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    console.log("Dados enviados:", data);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-full max-w-md shadow-md">
+        <CardHeader>
+          <CardTitle className="text-center">Login</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="login">Login</Label>
+              <Input
+                id="login"
+                type="text"
+                placeholder="Digite seu login"
+                {...register("login")}
+              />
+              {errors.login && (
+                <p className="text-red-500 text-sm">{errors.login.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Digite sua senha"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="cnpj">CNPJ</Label>
+              <Input
+                id="cnpj"
+                type="text"
+                placeholder="Digite seu CNPJ"
+                {...register("cnpj")}
+              />
+              {errors.cnpj && (
+                <p className="text-red-500 text-sm">{errors.cnpj.message}</p>
+              )}
+            </div>
+            <Button type="submit" className="w-full">
+              Entrar
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
