@@ -1,7 +1,6 @@
 "use client";
-import Logo from "@/assets/bistro.png";
+import Logo from "@/assets/logo/logo.svg";
 import { SearchForm } from "@/components/search-form";
-import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -15,10 +14,11 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { authService } from "@/lib/auth";
 import {
-  RiCodeSSlashLine,
+  RiArtboard2Line,
   RiDashboard2Line,
-  RiLoginCircleLine,
+  RiDropboxLine,
   RiLogoutBoxLine,
   RiSettings3Line,
   RiUserFollowLine,
@@ -38,42 +38,50 @@ const data = {
   restaurant: [
     {
       name: "Restaurante teste",
+      cnpj: "00000000000000",
       logo: "",
     },
   ],
   navMain: [
     {
+      id: "p1",
       title: "Seções",
       url: "#",
       items: [
         {
+          id: "p11",
           title: "Dashboard",
           url: "/dashboard",
           icon: RiDashboard2Line,
         },
         {
+          id: "p12",
           title: "Usuários",
           url: "/users",
           icon: RiUserFollowLine,
           isActive: true,
         },
         {
+          id: "p13",
           title: "Produtos",
           url: "/products",
-          icon: RiCodeSSlashLine,
+          icon: RiDropboxLine,
         },
         {
+          id: "p14",
           title: "Mesas",
           url: "/tables",
-          icon: RiLoginCircleLine,
+          icon: RiArtboard2Line,
         },
       ],
     },
     {
+      id: "p2",
       title: "Outros",
       url: "#",
       items: [
         {
+          id: "p21",
           title: "Configurações",
           url: "/settings",
           icon: RiSettings3Line,
@@ -112,19 +120,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <span className="font-semibold">Bistro Admin</span>
         </div>
         <hr className="border-t border-border mx-2 -mt-px" />
-        <TeamSwitcher teams={data.restaurant} />
+        {/* <TeamSwitcher teams={data.restaurant} /> */}
         <SearchForm className="mt-3" />
       </SidebarHeader>
       <SidebarContent>
         {data.navMain.map((group) => (
-          <SidebarGroup key={group.title}>
+          <SidebarGroup key={group.id}>
             <SidebarGroupLabel className="uppercase text-muted-foreground/60">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent className="px-2">
               <SidebarMenu>
                 {group.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       asChild
                       className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
@@ -153,7 +161,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <hr className="border-t border-border mx-2 -mt-px" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto">
+            <SidebarMenuButton
+              className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+              onClick={() => authService.logout()}
+            >
               <RiLogoutBoxLine
                 className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
                 size={22}

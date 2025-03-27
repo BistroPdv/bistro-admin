@@ -17,22 +17,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  RiAddLine,
-  RiBuilding2Fill,
-  RiExpandUpDownLine,
-} from "@remixicon/react";
+import { RiAddLine, RiExpandUpDownLine, RiStore3Line } from "@remixicon/react";
 
 export function TeamSwitcher({
   teams,
 }: {
   teams: {
     name: string;
+    cnpj: string;
     logo?: string;
   }[];
 }) {
   const [activeTeam, setActiveTeam] = React.useState<{
     name: string;
+    cnpj: string;
     logo: string;
   } | null>(null);
 
@@ -47,7 +45,7 @@ export function TeamSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground gap-3 [&>svg]:size-auto"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-md overflow-hidden bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-md overflow-hidden bg-zinc-500 dark:bg-sidebar-primary text-sidebar-primary-foreground">
                 {activeTeam && activeTeam.logo ? (
                   <Image
                     src={activeTeam?.logo}
@@ -56,7 +54,7 @@ export function TeamSwitcher({
                     alt={activeTeam.name}
                   />
                 ) : (
-                  <RiBuilding2Fill />
+                  <RiStore3Line />
                 )}
               </div>
               <div className="grid flex-1 text-left text-base leading-tight">
@@ -82,19 +80,21 @@ export function TeamSwitcher({
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
-                key={team.name}
+                key={team.cnpj}
                 onClick={() =>
                   setActiveTeam({ ...team, logo: team.logo || "" })
                 }
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md overflow-hidden">
-                  <Image
-                    src={team.logo || ""}
-                    width={36}
-                    height={36}
-                    alt={team.name}
-                  />
+                  {team.logo && (
+                    <Image
+                      src={team.logo || ""}
+                      width={36}
+                      height={36}
+                      alt={team.name}
+                    />
+                  )}
                 </div>
                 {team.name}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>

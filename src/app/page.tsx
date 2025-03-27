@@ -1,16 +1,21 @@
 "use client";
 
+import Logo from "@/assets/logo/logo.svg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authService } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 // Esquema de validação com Zod
 const loginSchema = z.object({
-  login: z.string().min(1, "O login é obrigatório"),
+  username: z.string().min(1, "O login é obrigatório"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   cnpj: z
     .string()
@@ -20,6 +25,10 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -28,15 +37,33 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    console.log("Dados enviados:", data);
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+    setLoginError(null);
+
+    try {
+      const response = await authService.login(data);
+
+      router.push("/dashboard");
+    } catch (error: any) {
+      if (error.response) {
+        setLoginError(error.response.data?.message || "Credenciais inválidas");
+      } else {
+        setLoginError("Erro ao conectar ao servidor. Tente novamente.");
+      }
+      console.error("Erro de login:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen ">
       <Card className="w-full max-w-md shadow-md">
         <CardHeader>
-          <CardTitle className="text-center">Login</CardTitle>
+          <CardTitle className="w-full flex justify-center">
+            <Image className="w-28" src={Logo} alt="Logo" />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -46,10 +73,12 @@ export default function LoginPage() {
                 id="login"
                 type="text"
                 placeholder="Digite seu login"
-                {...register("login")}
+                {...register("username")}
               />
-              {errors.login && (
-                <p className="text-red-500 text-sm">{errors.login.message}</p>
+              {errors.username && (
+                <p className="text-red-500 text-sm">
+                  {errors.username.message}
+                </p>
               )}
             </div>
             <div>
@@ -78,8 +107,13 @@ export default function LoginPage() {
                 <p className="text-red-500 text-sm">{errors.cnpj.message}</p>
               )}
             </div>
-            <Button type="submit" className="w-full">
-              Entrar
+            {loginError && (
+              <div className="p-3 text-sm text-white bg-red-500 rounded-md">
+                {loginError}
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
         </CardContent>

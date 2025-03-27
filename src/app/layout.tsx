@@ -1,5 +1,7 @@
+import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
 
+import { ReactNode } from "react";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -9,16 +11,16 @@ const fontSans = Inter({
 
 export default function RootLayout({
   children,
-  breadcrumb,
 }: Readonly<{
-  children: React.ReactNode;
-  breadcrumb: React.ReactNode;
+  children: ReactNode;
+  breadcrumbs: ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scheme-only-dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${fontSans.variable} font-sans antialiased`}>
-        {breadcrumb}
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
