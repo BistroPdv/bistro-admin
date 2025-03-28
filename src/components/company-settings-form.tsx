@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RiAddLine, RiCloseLine, RiUpload2Line } from "@remixicon/react";
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -27,8 +27,24 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import api from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
 
-// Definindo o esquema de validação com zod
+export interface PropsSetting {
+  cnpj: string;
+  name: string;
+  logo: any;
+  email: string;
+  phone: string;
+  Banner: Banner[];
+}
+
+interface Banner {
+  url: string;
+  nome: string;
+}
+
 const formSchema = z.object({
   name: z.string().min(1, { message: "Nome da empresa é obrigatório" }),
   email: z.string().email({ message: "E-mail inválido" }),
@@ -43,11 +59,21 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CompanySettingsForm() {
-  // Estado para armazenar previews de imagens
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [bannerPreviews, setBannerPreviews] = useState<string[]>([]);
+  const local = JSON.parse(localStorage.getItem("user") || "");
 
-  // Inicializar o formulário com react-hook-form
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreviews, setBannerPreviews] = useState<
+    { url: string; nome: string }[]
+  >([]);
+
+  const configEnterprise = useQuery<AxiosResponse<PropsSetting>>({
+    queryKey: ["enterprise"],
+    queryFn: () => {
+      const resp = api.get("/settings");
+      return resp;
+    },
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,16 +84,13 @@ export function CompanySettingsForm() {
     },
   });
 
-  // Função para lidar com o upload do logo
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Atualizar o valor do campo logo no formulário
       form.setValue("logo", file, { shouldValidate: true });
 
-      // Criar preview da imagem
       const reader = new FileReader();
       reader.onload = () => {
         setLogoPreview(reader.result as string);
@@ -77,13 +100,11 @@ export function CompanySettingsForm() {
     [form]
   );
 
-  // Função para lidar com o upload de banners
   const handleBannerUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files) return;
 
-      // Verificar se não excede o limite de 5 imagens
       const currentBanners = form.getValues("banners") || [];
       const newFiles = Array.from(files);
       const totalFiles = [...currentBanners, ...newFiles];
@@ -96,15 +117,16 @@ export function CompanySettingsForm() {
         return;
       }
 
-      // Atualizar o valor do campo banners no formulário
       form.setValue("banners", totalFiles, { shouldValidate: true });
 
-      // Criar previews das imagens
       const newPreviews: string[] = [];
       newFiles.forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
-          setBannerPreviews((prev) => [...prev, reader.result as string]);
+          setBannerPreviews((prev) => [
+            ...prev,
+            { url: reader.result as string, nome: file.name },
+          ]);
         };
         reader.readAsDataURL(file);
       });
@@ -112,7 +134,6 @@ export function CompanySettingsForm() {
     [form]
   );
 
-  // Função para remover um banner
   const removeBanner = useCallback(
     (index: number) => {
       const currentBanners = form.getValues("banners") || [];
@@ -120,7 +141,6 @@ export function CompanySettingsForm() {
       updatedBanners.splice(index, 1);
       form.setValue("banners", updatedBanners, { shouldValidate: true });
 
-      // Atualizar previews
       const updatedPreviews = [...bannerPreviews];
       updatedPreviews.splice(index, 1);
       setBannerPreviews(updatedPreviews);
@@ -128,12 +148,50 @@ export function CompanySettingsForm() {
     [form, bannerPreviews]
   );
 
-  // Função para lidar com o envio do formulário
-  const onSubmit = (data: FormValues) => {
-    // Aqui você implementaria a lógica para salvar os dados no backend
-    console.log("Dados do formulário:", data);
-    // Por exemplo: await api.post('/company/settings', formData);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const banners = data.banners || [];
+      delete data.banners;
+      const resp = await api.putForm("/settings", data);
+
+      if (resp.status === 200 && banners.length > 0) {
+        for (let i = 0; i < banners.length; i++) {
+          const banner = banners[i];
+          await api.postForm(
+            `/restaurantCnpj/${local.restaurantCnpj}/banners`,
+            {
+              banner,
+            }
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar configurações:", error);
+    }
   };
+
+  useEffect(() => {
+    if (configEnterprise.isFetched && configEnterprise.data) {
+      const { name, email, phone, logo, Banner } = configEnterprise.data.data;
+
+      // Apenas atualiza se os valores forem diferentes
+      if (
+        form.getValues("name") !== name ||
+        form.getValues("email") !== email ||
+        form.getValues("phone") !== phone
+      ) {
+        form.setValue("name", name);
+        form.setValue("email", email);
+        form.setValue("phone", phone);
+      }
+
+      if (logoPreview !== logo) setLogoPreview(logo);
+
+      if (Banner.length > 0) {
+        setBannerPreviews(Banner);
+      }
+    }
+  }, [configEnterprise.data, configEnterprise.isFetched]);
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -143,7 +201,6 @@ export function CompanySettingsForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Logo da empresa */}
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <div className="w-full md:w-1/3">
                 <FormLabel className="text-base font-medium">
@@ -193,7 +250,6 @@ export function CompanySettingsForm() {
 
             <div className="border-t pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Nome da empresa */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -211,7 +267,6 @@ export function CompanySettingsForm() {
                   )}
                 />
 
-                {/* E-mail */}
                 <FormField
                   control={form.control}
                   name="email"
@@ -230,7 +285,6 @@ export function CompanySettingsForm() {
                   )}
                 />
 
-                {/* Telefone */}
                 <FormField
                   control={form.control}
                   name="phone"
@@ -251,7 +305,6 @@ export function CompanySettingsForm() {
               </div>
             </div>
 
-            {/* Banner (múltiplas imagens) */}
             <div className="border-t pt-6">
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 <div className="w-full md:w-1/3">
@@ -265,14 +318,13 @@ export function CompanySettingsForm() {
                 </div>
                 <div className="w-full md:w-2/3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* Previews de banners */}
                     {bannerPreviews.map((preview, index) => (
                       <div
                         key={index}
                         className="relative aspect-video rounded-md overflow-hidden border bg-muted"
                       >
                         <Image
-                          src={preview}
+                          src={preview.url}
                           alt={`Banner ${index + 1}`}
                           fill
                           className="object-cover"
@@ -289,7 +341,6 @@ export function CompanySettingsForm() {
                       </div>
                     ))}
 
-                    {/* Botão de upload (se menos de 5 imagens) */}
                     {bannerPreviews.length < 5 && (
                       <Label
                         htmlFor="banner-upload"
