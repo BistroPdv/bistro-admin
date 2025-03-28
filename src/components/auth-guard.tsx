@@ -17,7 +17,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const checkAuth = () => {
       const authenticated = authService.isAuthenticated();
       setIsAuthenticated(authenticated);
-
+      console.log("authenticated", authenticated);
       if (!authenticated) {
         router.push("/");
       }
@@ -26,6 +26,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
     };
 
     checkAuth();
+
+    // Adiciona um intervalo para verificar a autenticação periodicamente
+    const interval = setInterval(checkAuth, 30000); // Verifica a cada 30 segundos
+
+    // Limpa o intervalo quando o componente é desmontado
+    return () => clearInterval(interval);
   }, [router]);
 
   if (isLoading) {
