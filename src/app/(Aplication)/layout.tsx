@@ -20,11 +20,11 @@ export default function MainLayout({
 }>) {
   return (
     <AuthGuard>
-      <main>
+      <main className="flex flex-col h-full">
         <Providers>
           <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8">
+            <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8 flex flex-col h-full">
               <header className="flex h-16 shrink-0 items-center gap-2 border-b">
                 <div className="flex flex-1 items-center gap-2 px-3">
                   <SidebarTrigger className="-ms-4" />
@@ -39,10 +39,8 @@ export default function MainLayout({
                   <ThemeToggle />
                 </div>
               </header>
-              <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6">
-                <div className="min-h-[100vh] flex-1 md:min-h-min">
-                  {children}
-                </div>
+              <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6 overflow-hidden">
+                <div className="flex-1 overflow-auto">{children}</div>
               </div>
             </SidebarInset>
           </SidebarProvider>

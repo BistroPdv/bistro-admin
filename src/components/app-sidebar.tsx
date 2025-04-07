@@ -19,7 +19,9 @@ import {
   RiArtboard2Line,
   RiDashboard2Line,
   RiDropboxLine,
+  RiFileList3Line,
   RiLogoutBoxLine,
+  RiPrinterLine,
   RiSettings3Line,
   RiUserFollowLine,
 } from "@remixicon/react";
@@ -72,6 +74,18 @@ const data = {
           title: "Mesas",
           url: "/tables",
           icon: RiArtboard2Line,
+        },
+        {
+          id: "p15",
+          title: "Impressoras",
+          url: "/printers",
+          icon: RiPrinterLine,
+        },
+        {
+          id: "p16",
+          title: "Pedidos",
+          url: "/orders",
+          icon: RiFileList3Line,
         },
       ],
     },

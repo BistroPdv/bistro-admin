@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Bistro Admin - Produtos",
+  title: "Bistro Admin - Configurações",
 };
-
-import React from "react";
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="flex flex-col flex-1 h-full">{children}</div>;
+  return <>{children}</>;
 }

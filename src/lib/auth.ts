@@ -78,7 +78,7 @@ export const authService = {
       // Iniciar uma verificação assíncrona com o backend
       // Esta verificação não bloqueia o retorno da função,
       // mas irá fazer logout se o token for inválido
-      this.validateTokenWithServer();
+      // this.validateTokenWithServer();
 
       return true;
     } catch (error) {

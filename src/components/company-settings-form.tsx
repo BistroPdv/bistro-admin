@@ -5,6 +5,8 @@ import { RiAddLine, RiCloseLine, RiUpload2Line } from "@remixicon/react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { v4 as uuid } from "uuid";
 import * as z from "zod";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
+import { withMask } from "use-mask-input";
+import { SettingsFormSkeleton } from "./company-settings-form-skeleton";
 
 export interface PropsSetting {
   cnpj: string;
@@ -41,6 +45,7 @@ export interface PropsSetting {
 }
 
 interface Banner {
+  id: string;
   url: string;
   nome: string;
 }
@@ -63,7 +68,7 @@ export function CompanySettingsForm() {
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreviews, setBannerPreviews] = useState<
-    { url: string; nome: string }[]
+    { id: string; url: string; nome: string }[]
   >([]);
 
   const configEnterprise = useQuery<AxiosResponse<PropsSetting>>({
@@ -125,7 +130,7 @@ export function CompanySettingsForm() {
         reader.onload = () => {
           setBannerPreviews((prev) => [
             ...prev,
-            { url: reader.result as string, nome: file.name },
+            { url: reader.result as string, nome: file.name, id: uuid() },
           ]);
         };
         reader.readAsDataURL(file);
@@ -135,15 +140,22 @@ export function CompanySettingsForm() {
   );
 
   const removeBanner = useCallback(
-    (index: number) => {
-      const currentBanners = form.getValues("banners") || [];
-      const updatedBanners = [...currentBanners];
-      updatedBanners.splice(index, 1);
-      form.setValue("banners", updatedBanners, { shouldValidate: true });
+    async (index: number, id: string) => {
+      try {
+        await api.delete(
+          `/restaurantCnpj/${local.restaurantCnpj}/banners/${id}`
+        );
+        const currentBanners = form.getValues("banners") || [];
+        const updatedBanners = [...currentBanners];
+        updatedBanners.splice(index, 1);
+        form.setValue("banners", updatedBanners, { shouldValidate: true });
 
-      const updatedPreviews = [...bannerPreviews];
-      updatedPreviews.splice(index, 1);
-      setBannerPreviews(updatedPreviews);
+        const updatedPreviews = [...bannerPreviews];
+        updatedPreviews.splice(index, 1);
+        setBannerPreviews(updatedPreviews);
+      } catch (error) {
+        toast.error("Erro ao remover banner");
+      }
     },
     [form, bannerPreviews]
   );
@@ -165,15 +177,17 @@ export function CompanySettingsForm() {
           );
         }
       }
+
+      toast.success("Configurações atualizadas com sucesso");
     } catch (error) {
-      console.error("Erro ao atualizar configurações:", error);
+      toast.error(`Erro ao atualizar configurações: ${error}`);
     }
   };
 
   useEffect(() => {
     if (configEnterprise.isFetched && configEnterprise.data) {
       const { name, email, phone, logo, Banner } = configEnterprise.data.data;
-
+      console.log(Banner);
       // Apenas atualiza se os valores forem diferentes
       if (
         form.getValues("name") !== name ||
@@ -199,183 +213,194 @@ export function CompanySettingsForm() {
         <CardTitle className="text-2xl">Configurações da Empresa</CardTitle>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              <div className="w-full md:w-1/3">
-                <FormLabel className="text-base font-medium">
-                  Logo da Empresa
-                </FormLabel>
-                <FormDescription>
-                  Faça upload do logo da sua empresa. Recomendamos uma imagem
-                  quadrada de pelo menos 200x200 pixels.
-                </FormDescription>
-              </div>
-              <div className="w-full md:w-2/3 flex flex-col items-center md:items-start gap-4">
-                <div className="flex flex-col items-center gap-4">
-                  <Label
-                    htmlFor="logo-upload"
-                    className="cursor-pointer relative group"
-                  >
-                    <Avatar className="size-24 rounded-md transition-all duration-200 group-hover:opacity-80">
-                      {logoPreview ? (
-                        <AvatarImage src={logoPreview} alt="Logo da empresa" />
-                      ) : (
-                        <AvatarFallback className="bg-muted text-muted-foreground text-lg">
-                          Logo
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className="bg-black/50 rounded-md flex items-center justify-center w-full h-full">
-                        <RiUpload2Line className="text-white" size={24} />
-                      </div>
-                    </div>
-                    <Input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoUpload}
-                    />
-                  </Label>
-                  <FormDescription className="text-center">
-                    Clique na imagem para carregar o logo
-                    <br />
-                    Formatos aceitos: JPG, PNG, SVG
-                  </FormDescription>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome da Empresa</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Digite o nome da empresa"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="contato@empresa.com"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="(00) 00000-0000"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
+        {configEnterprise.isLoading ? (
+          <SettingsFormSkeleton />
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 <div className="w-full md:w-1/3">
                   <FormLabel className="text-base font-medium">
-                    Banner
+                    Logo da Empresa
                   </FormLabel>
                   <FormDescription>
-                    Faça upload de até 5 imagens para o banner da sua empresa.
-                    Estas imagens serão usadas em um carrossel do tablet.
+                    Faça upload do logo da sua empresa. Recomendamos uma imagem
+                    quadrada de pelo menos 200x200 pixels.
                   </FormDescription>
                 </div>
-                <div className="w-full md:w-2/3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {bannerPreviews.map((preview, index) => (
-                      <div
-                        key={index}
-                        className="relative aspect-video rounded-md overflow-hidden border bg-muted"
-                      >
-                        <Image
-                          src={preview.url}
-                          alt={`Banner ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 size-6 rounded-full"
-                          onClick={() => removeBanner(index)}
-                        >
-                          <RiCloseLine size={16} />
-                        </Button>
+                <div className="w-full md:w-2/3 flex flex-col items-center md:items-start gap-4">
+                  <div className="flex flex-col items-center gap-4">
+                    <Label
+                      htmlFor="logo-upload"
+                      className="cursor-pointer relative group"
+                    >
+                      <Avatar className="size-24 rounded-md transition-all duration-200 group-hover:opacity-80">
+                        {logoPreview ? (
+                          <AvatarImage
+                            src={logoPreview}
+                            alt="Logo da empresa"
+                          />
+                        ) : (
+                          <AvatarFallback className="bg-muted text-muted-foreground text-lg">
+                            Logo
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="bg-black/50 rounded-md flex items-center justify-center w-full h-full">
+                          <RiUpload2Line className="text-white" size={24} />
+                        </div>
                       </div>
-                    ))}
-
-                    {bannerPreviews.length < 5 && (
-                      <Label
-                        htmlFor="banner-upload"
-                        className="cursor-pointer flex flex-col items-center justify-center aspect-video rounded-md border border-dashed bg-muted/50 hover:bg-muted transition-colors"
-                      >
-                        <RiAddLine
-                          size={24}
-                          className="mb-2 text-muted-foreground"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          Adicionar imagem
-                        </span>
-                        <Input
-                          id="banner-upload"
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={handleBannerUpload}
-                        />
-                      </Label>
-                    )}
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                    </Label>
+                    <FormDescription className="text-center">
+                      Clique na imagem para carregar o logo
+                      <br />
+                      Formatos aceitos: JPG, PNG, SVG
+                    </FormDescription>
                   </div>
-                  <FormMessage className="mt-2" />
                 </div>
               </div>
-            </div>
 
-            <CardFooter className="px-0 flex justify-end">
-              <Button type="submit" size="lg">
-                Salvar Alterações
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
+              <div className="border-t pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome da Empresa</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Digite o nome da empresa"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="contato@empresa.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            ref={withMask("(99) 99999-9999", {
+                              showMaskOnHover: false,
+                            })}
+                            placeholder="(XX) XXXXX-XXXX"
+                            type="tel"
+                            maxLength={15} // Max length for (XX) XXXXX-XXXX format
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="w-full md:w-1/3">
+                    <FormLabel className="text-base font-medium">
+                      Banner
+                    </FormLabel>
+                    <FormDescription>
+                      Faça upload de até 5 imagens para o banner da sua empresa.
+                      Estas imagens serão usadas em um carrossel do tablet.
+                    </FormDescription>
+                  </div>
+                  <div className="w-full md:w-2/3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {bannerPreviews.map((preview, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-video rounded-md overflow-hidden border bg-muted"
+                        >
+                          <Image
+                            src={preview.url}
+                            alt={`Banner ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 size-6 rounded-full"
+                            onClick={() => removeBanner(index, preview.id)}
+                          >
+                            <RiCloseLine size={16} />
+                          </Button>
+                        </div>
+                      ))}
+
+                      {bannerPreviews.length < 5 && (
+                        <Label
+                          htmlFor="banner-upload"
+                          className="cursor-pointer flex flex-col items-center justify-center aspect-video rounded-md border border-dashed bg-muted/50 hover:bg-muted transition-colors"
+                        >
+                          <RiAddLine
+                            size={24}
+                            className="mb-2 text-muted-foreground"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            Adicionar imagem
+                          </span>
+                          <Input
+                            id="banner-upload"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleBannerUpload}
+                          />
+                        </Label>
+                      )}
+                    </div>
+                    <FormMessage className="mt-2" />
+                  </div>
+                </div>
+              </div>
+
+              <CardFooter className="px-0 flex justify-end">
+                <Button type="submit" size="lg">
+                  Salvar Alterações
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   );
