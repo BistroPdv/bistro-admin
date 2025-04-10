@@ -29,6 +29,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
@@ -70,6 +77,7 @@ export function CompanySettingsForm() {
   const [bannerPreviews, setBannerPreviews] = useState<
     { id: string; url: string; nome: string }[]
   >([]);
+  const [integrationType, setIntegrationType] = useState<string>("omie");
 
   const configEnterprise = useQuery<AxiosResponse<PropsSetting>>({
     queryKey: ["enterprise"],
@@ -208,7 +216,7 @@ export function CompanySettingsForm() {
   }, [configEnterprise.data, configEnterprise.isFetched]);
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl">
       <CardHeader>
         <CardTitle className="text-2xl">Configurações da Empresa</CardTitle>
       </CardHeader>
@@ -389,6 +397,135 @@ export function CompanySettingsForm() {
                       )}
                     </div>
                     <FormMessage className="mt-2" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="w-full md:w-1/3">
+                    <FormLabel className="text-base font-medium">
+                      Integração PDV
+                    </FormLabel>
+                    <FormDescription>
+                      Configure as integrações com sistemas externos para o seu
+                      negócio.
+                    </FormDescription>
+                  </div>
+                  <div className="w-full md:w-2/3">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="integration-type">
+                          Tipo de Integração
+                        </Label>
+                        <Select
+                          defaultValue="omie"
+                          onValueChange={(value) => setIntegrationType(value)}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            id="integration-type"
+                          >
+                            <SelectValue placeholder="Selecione o tipo de integração" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bistro">Bistro</SelectItem>
+                            <SelectItem value="omie">OMIE</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="mt-1">
+                          Selecione o sistema que deseja integrar com sua
+                          aplicação
+                        </FormDescription>
+                      </div>
+
+                      {integrationType === "omie" && (
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">OMIE</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 gap-6">
+                              <div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  Integre sua conta OMIE para sincronização de
+                                  dados financeiros e estoque
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="omie-app-key">
+                                      App Key
+                                    </Label>
+                                    <Input
+                                      id="omie-app-key"
+                                      placeholder="Digite a App Key da OMIE"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="omie-secret-key">
+                                      Secret Key
+                                    </Label>
+                                    <Input
+                                      id="omie-secret-key"
+                                      type="password"
+                                      placeholder="Digite a Secret Key da OMIE"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button variant="outline">
+                                  Salvar credenciais
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {integrationType === "bistro" && (
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Bistro</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 gap-6">
+                              <div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  Configure a integração com o sistema Bistro
+                                  para gerenciamento de pedidos
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="bistro-api-key">
+                                      API Key
+                                    </Label>
+                                    <Input
+                                      id="bistro-api-key"
+                                      placeholder="Digite a API Key do Bistro"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="bistro-endpoint">
+                                      Endpoint
+                                    </Label>
+                                    <Input
+                                      id="bistro-endpoint"
+                                      placeholder="https://api.bistro.com.br"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button variant="outline">
+                                  Salvar configuração
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

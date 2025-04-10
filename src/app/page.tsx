@@ -25,7 +25,7 @@ const loginSchema = z.object({
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   cnpj: z
     .string()
-    .regex(/^\d{14}$/, "O CNPJ deve conter exatamente 14 dígitos"),
+    .regex(/^\d{11,14}$/, "O CPF/CNPJ deve conter de 11 a 14 dígitos"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -162,7 +162,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
+              <Label htmlFor="cnpj">CPF/CNPJ</Label>
               <div className="relative">
                 <Input
                   id="cnpj"
