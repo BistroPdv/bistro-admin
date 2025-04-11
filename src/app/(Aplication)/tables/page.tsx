@@ -33,6 +33,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import api from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
 
 // Definindo o esquema de validação com zod
 const tableFormSchema = z
@@ -67,33 +70,25 @@ type TableFormValues = z.infer<typeof tableFormSchema>;
 
 type Table = {
   id: string;
-  number: string;
-  capacity: string;
+  numero: number;
+  delete: boolean;
+  capacity: number;
   location: string;
+  createdAt: string;
+  restaurantCnpj: string;
+  updatedAt: string;
 };
 
 export default function Page() {
-  const [tables, setTables] = useState<Table[]>([
-    {
-      id: "1",
-      number: "01",
-      capacity: "4",
-      location: "Área interna",
+  const local = localStorage.getItem("user");
+  const cnpj = JSON.parse(local || "");
+  const tables = useQuery<AxiosResponse<Table[]>>({
+    queryKey: ["tables"],
+    queryFn: async () => {
+      const response = await api.get(`/restaurantCnpj/${cnpj}/mesa`);
+      return response.data;
     },
-    {
-      id: "2",
-      number: "02",
-      capacity: "2",
-      location: "Área externa",
-    },
-    {
-      id: "3",
-      number: "03",
-      capacity: "6",
-      location: "Área interna",
-    },
-  ]);
-
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
 
@@ -110,43 +105,12 @@ export default function Page() {
   const onSubmit = (data: TableFormValues) => {
     if (editingTable) {
       // Editar mesa existente
-      setTables(
-        tables.map((table) =>
-          table.id === editingTable.id ? { ...table, ...data } : table
-        )
-      );
     } else {
       // Verificar se é adição em lote (intervalo de mesas)
       if (data.endNumber && data.endNumber.trim() !== "") {
         const startNum = parseInt(data.number);
         const endNum = parseInt(data.endNumber);
         const newTables: Table[] = [];
-
-        // Criar mesas no intervalo especificado
-        for (let i = startNum; i <= endNum; i++) {
-          // Formatar o número da mesa com zeros à esquerda (ex: 01, 02, ...)
-          const formattedNumber = i
-            .toString()
-            .padStart(data.number.length, "0");
-
-          newTables.push({
-            id: `${Date.now()}-${i}`,
-            number: formattedNumber,
-            capacity: data.capacity,
-            location: data.location,
-          });
-        }
-
-        setTables([...tables, ...newTables]);
-      } else {
-        // Adicionar uma única mesa
-        const newTable: Table = {
-          id: Date.now().toString(),
-          number: data.number,
-          capacity: data.capacity,
-          location: data.location,
-        };
-        setTables([...tables, newTable]);
       }
     }
 
@@ -158,17 +122,11 @@ export default function Page() {
 
   const handleEditTable = (table: Table) => {
     setEditingTable(table);
-    form.reset({
-      number: table.number,
-      capacity: table.capacity,
-      location: table.location,
-    });
+
     setIsDialogOpen(true);
   };
 
-  const handleDeleteTable = (id: string) => {
-    setTables(tables.filter((table) => table.id !== id));
-  };
+  const handleDeleteTable = (id: string) => {};
 
   const handleAddNewTable = () => {
     setEditingTable(null);
@@ -191,16 +149,16 @@ export default function Page() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tables.map((table) => (
+        {tables?.data?.data.map((table) => (
           <Card key={table.id}>
             <CardHeader>
-              <CardTitle>Mesa {table.number}</CardTitle>
+              <CardTitle>Mesa {table.numero}</CardTitle>
               <CardDescription>
-                Capacidade: {table.capacity} pessoas
+                Capacidade: {table?.capacity} pessoas
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">Localização: {table.location}</p>
+              <p className="text-sm">Localização: {table?.location}</p>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button

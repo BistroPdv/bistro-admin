@@ -49,6 +49,8 @@ export interface PropsSetting {
   email: string;
   phone: string;
   Banner: Banner[];
+  pdvIntegrations: string;
+  integrationOmie: { omie_key: string; omie_secret: string } | null;
 }
 
 interface Banner {
@@ -66,6 +68,9 @@ const formSchema = z.object({
     .array(z.instanceof(File))
     .max(5, { message: "Máximo de 5 imagens permitidas" })
     .optional(),
+  pdvIntegrations: z.string(),
+  omieAppKey: z.string().optional(),
+  omieSecretKey: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -94,6 +99,9 @@ export function CompanySettingsForm() {
       email: "",
       phone: "",
       banners: [],
+      pdvIntegrations: "",
+      omieAppKey: "",
+      omieSecretKey: "",
     },
   });
 
@@ -170,6 +178,7 @@ export function CompanySettingsForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
+      console.log(data);
       const banners = data.banners || [];
       delete data.banners;
       const resp = await api.putForm("/settings", data);
@@ -194,17 +203,34 @@ export function CompanySettingsForm() {
 
   useEffect(() => {
     if (configEnterprise.isFetched && configEnterprise.data) {
-      const { name, email, phone, logo, Banner } = configEnterprise.data.data;
-      console.log(Banner);
+      const {
+        name,
+        email,
+        phone,
+        logo,
+        Banner,
+        pdvIntegrations,
+        integrationOmie,
+      } = configEnterprise.data.data;
+      console.log(configEnterprise.data.data);
+
       // Apenas atualiza se os valores forem diferentes
       if (
         form.getValues("name") !== name ||
         form.getValues("email") !== email ||
-        form.getValues("phone") !== phone
+        form.getValues("phone") !== phone ||
+        form.getValues("pdvIntegrations") !== pdvIntegrations
       ) {
         form.setValue("name", name);
         form.setValue("email", email);
         form.setValue("phone", phone);
+        form.setValue("pdvIntegrations", pdvIntegrations);
+        setIntegrationType(pdvIntegrations);
+
+        if (pdvIntegrations === "OMIE") {
+          form.setValue("omieAppKey", integrationOmie?.omie_key);
+          form.setValue("omieSecretKey", integrationOmie?.omie_secret);
+        }
       }
 
       if (logoPreview !== logo) setLogoPreview(logo);
@@ -214,6 +240,8 @@ export function CompanySettingsForm() {
       }
     }
   }, [configEnterprise.data, configEnterprise.isFetched]);
+
+  console.log(integrationType);
 
   return (
     <Card className="w-full max-w-4xl">
@@ -414,35 +442,41 @@ export function CompanySettingsForm() {
                   </div>
                   <div className="w-full md:w-2/3">
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="integration-type">
-                          Tipo de Integração
-                        </Label>
-                        <Select
-                          defaultValue="omie"
-                          onValueChange={(value) => setIntegrationType(value)}
-                        >
-                          <SelectTrigger
-                            className="w-full"
-                            id="integration-type"
-                          >
-                            <SelectValue placeholder="Selecione o tipo de integração" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="bistro">Bistro</SelectItem>
-                            <SelectItem value="omie">OMIE</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className="mt-1">
-                          Selecione o sistema que deseja integrar com sua
-                          aplicação
-                        </FormDescription>
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name="pdvIntegrations"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipo de Integração</FormLabel>
+                            <Select
+                              defaultValue={field.value}
+                              onValueChange={(value) => {
+                                // setIntegrationType(value);
+                                field.onChange(value);
+                              }}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione o tipo de integração" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="OMIE">OMIE</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Selecione o sistema que deseja integrar com sua
+                              aplicação
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      {integrationType === "omie" && (
+                      {integrationType == "OMIE" && (
                         <Card>
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">OMIE</CardTitle>
+                            <CardTitle className="text-lg">
+                              <img src="https://www.omie.com.br/assets/images/logo-omie.png" />
+                            </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="grid grid-cols-1 gap-6">
@@ -452,74 +486,40 @@ export function CompanySettingsForm() {
                                   dados financeiros e estoque
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="omie-app-key">
-                                      App Key
-                                    </Label>
-                                    <Input
-                                      id="omie-app-key"
-                                      placeholder="Digite a App Key da OMIE"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor="omie-secret-key">
-                                      Secret Key
-                                    </Label>
-                                    <Input
-                                      id="omie-secret-key"
-                                      type="password"
-                                      placeholder="Digite a Secret Key da OMIE"
-                                    />
-                                  </div>
+                                  <FormField
+                                    control={form.control}
+                                    name="omieAppKey"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>App Key</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            placeholder="Digite a App Key da OMIE"
+                                            {...field}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={form.control}
+                                    name="omieSecretKey"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Secret Key</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="password"
+                                            placeholder="Digite a Secret Key da OMIE"
+                                            {...field}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </div>
-                              </div>
-                              <div className="flex justify-end">
-                                <Button variant="outline">
-                                  Salvar credenciais
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {integrationType === "bistro" && (
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">Bistro</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-1 gap-6">
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  Configure a integração com o sistema Bistro
-                                  para gerenciamento de pedidos
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor="bistro-api-key">
-                                      API Key
-                                    </Label>
-                                    <Input
-                                      id="bistro-api-key"
-                                      placeholder="Digite a API Key do Bistro"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor="bistro-endpoint">
-                                      Endpoint
-                                    </Label>
-                                    <Input
-                                      id="bistro-endpoint"
-                                      placeholder="https://api.bistro.com.br"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex justify-end">
-                                <Button variant="outline">
-                                  Salvar configuração
-                                </Button>
                               </div>
                             </div>
                           </CardContent>
