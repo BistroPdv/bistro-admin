@@ -1,7 +1,8 @@
 "use client";
+import { PaginatedResult } from "@/@types/pagination";
+import { Category } from "@/@types/products";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
-import { Categoria } from "@/components/products-table";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,7 +24,11 @@ export default function Page() {
 
   const local = localStorage.getItem("user");
   const cnpj = JSON.parse(local || "");
-  const { data, isLoading, error } = useQuery<AxiosResponse<Categoria[]>>({
+  const { data, isLoading, error } = useQuery<
+    AxiosResponse,
+    Error,
+    PaginatedResult<Category>
+  >({
     queryKey: ["products"],
     queryFn: () => {
       const response = api.get(
@@ -31,6 +36,7 @@ export default function Page() {
       );
       return response;
     },
+    select: (resp) => resp.data,
   });
 
   const createProductMutation = useMutation({

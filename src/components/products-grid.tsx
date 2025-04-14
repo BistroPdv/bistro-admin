@@ -1,12 +1,12 @@
 "use client";
 
+import { Category } from "@/@types/products";
 import { Product } from "@/schemas/product-schema";
 import { ProductCard } from "./product-card";
-import { Categoria } from "./products-table";
 
 interface ProductsGridProps {
   loading?: boolean;
-  items: Categoria[];
+  items: Category[];
   onEditProduct?: (product: Product) => void;
   onDeleteProduct?: (product: Product) => void;
 }

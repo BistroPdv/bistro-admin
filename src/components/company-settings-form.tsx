@@ -451,7 +451,7 @@ export function CompanySettingsForm() {
                             <Select
                               defaultValue={field.value}
                               onValueChange={(value) => {
-                                // setIntegrationType(value);
+                                setIntegrationType(value);
                                 field.onChange(value);
                               }}
                             >

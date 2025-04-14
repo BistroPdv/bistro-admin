@@ -1,5 +1,6 @@
 "use client";
 
+import { Category } from "@/@types/products";
 import { Product } from "@/schemas/product-schema";
 import { Badge, Edit2Icon, Trash2Icon } from "lucide-react";
 import { Button } from "./ui/button";
@@ -13,25 +14,9 @@ import {
   TableRow,
 } from "./ui/table";
 
-export interface Categoria {
-  id: string;
-  nome: string;
-  imagem: string;
-  cor: string;
-  ordem: number;
-  temPromocao: boolean;
-  externoId: any;
-  restaurantCnpj: string;
-  delete: boolean;
-  createAt: string;
-  updateAt: any;
-  produtos: Product[];
-  impressoras: any[];
-}
-
 interface RowActionsProps {
   loading?: boolean;
-  items: Categoria[];
+  items: Category[];
   onEditProduct?: (product: Product) => void;
 }
 
