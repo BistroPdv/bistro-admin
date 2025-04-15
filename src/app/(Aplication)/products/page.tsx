@@ -1,6 +1,7 @@
 "use client";
 import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
+import { CategoryForm, CategoryFormValues } from "@/components/category-form";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,9 @@ import { useState } from "react";
 
 export default function Page() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const queryClient = useQueryClient();
 
   const local = localStorage.getItem("user");
@@ -104,6 +107,26 @@ export default function Page() {
     },
   });
 
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (formData: CategoryFormValues & { id: string }) => {
+      // Endpoint para atualizar categoria
+      const endpoint = `/categorias/${formData.id}`;
+      return api.put(endpoint, {
+        nome: formData.nome,
+        cor: formData.cor,
+        restaurantCnpj: cnpj.restaurantCnpj,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setIsCategoryDialogOpen(false);
+      setEditingCategory(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar categoria:", error);
+    },
+  });
+
   const handleAddNewProduct = () => {
     setEditingProduct(null);
     setIsDialogOpen(true);
@@ -120,6 +143,17 @@ export default function Page() {
     } else {
       createProductMutation.mutate(data);
     }
+  };
+
+  const handleCategorySubmit = (data: CategoryFormValues) => {
+    if (editingCategory) {
+      updateCategoryMutation.mutate({ ...data, id: editingCategory.id });
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setIsCategoryDialogOpen(true);
   };
 
   const handleDeleteProduct = (product: Product) => {};
@@ -140,6 +174,7 @@ export default function Page() {
         items={data?.data || []}
         onEditProduct={handleEditProduct}
         onDeleteProduct={handleDeleteProduct}
+        onEditCategory={handleEditCategory}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -159,6 +194,25 @@ export default function Page() {
             categories={data?.data || []}
             onSubmit={handleSubmit}
             product={editingProduct || undefined}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isCategoryDialogOpen}
+        onOpenChange={setIsCategoryDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[95%] md:max-w-[85%] lg:max-w-[75%] xl:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Categoria</DialogTitle>
+            <DialogDescription>
+              Edite os detalhes da categoria selecionada.
+            </DialogDescription>
+          </DialogHeader>
+
+          <CategoryForm
+            onSubmit={handleCategorySubmit}
+            category={editingCategory || undefined}
           />
         </DialogContent>
       </Dialog>

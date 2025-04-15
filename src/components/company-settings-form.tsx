@@ -84,12 +84,17 @@ export function CompanySettingsForm() {
   >([]);
   const [integrationType, setIntegrationType] = useState<string>("omie");
 
-  const configEnterprise = useQuery<AxiosResponse<PropsSetting>>({
+  const configEnterprise = useQuery<
+    AxiosResponse,
+    Error,
+    AxiosResponse<PropsSetting>
+  >({
     queryKey: ["enterprise"],
     queryFn: () => {
       const resp = api.get("/settings");
       return resp;
     },
+    select: (data) => data.data,
   });
 
   const form = useForm<FormValues>({

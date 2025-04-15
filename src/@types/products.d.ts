@@ -12,6 +12,17 @@ export interface Category {
   updateAt: any;
   produtos: Product[];
   Impressora: PrintTypes;
+  tipoAdicional?: string; // Campo mantido para compatibilidade com dados existentes
+  tituloAdicionalFixo?: string; // Campo mantido para compatibilidade com dados existentes
+  opcoesAdicionais?: { nome: string }[]; // Campo mantido para compatibilidade com dados existentes
+  adicionais?: Adicional[];
+}
+
+export interface Adicional {
+  titulo: string;
+  qtdMinima: number;
+  qtdMaxima: number;
+  opcoes: { nome: string }[];
 }
 
 export interface PrintTypes {

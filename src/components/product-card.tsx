@@ -38,11 +38,11 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           <p className="font-medium text-base">{formattedPrice}</p>
         </div>
       </CardContent>
-      <CardFooter className="p-3 pt-0 flex justify-between">
+      <CardFooter className="p-3 pt-0 flex flex-col sm:flex-row gap-2">
         <Button
           variant="outline"
           size="sm"
-          className="w-full mr-1"
+          className="w-full"
           onClick={() => onEdit && onEdit(product)}
         >
           <Edit2Icon className="h-3 w-3 mr-1" />
