@@ -22,6 +22,7 @@ export interface Adicional {
   titulo: string;
   qtdMinima: number;
   qtdMaxima: number;
+  obrigatorio: boolean;
   opcoes: { nome: string }[];
 }
 

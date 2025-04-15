@@ -15,6 +15,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import * as z from "zod";
@@ -23,6 +30,7 @@ const adicionalSchema = z.object({
   titulo: z.string().min(1, "O título do adicional é obrigatório"),
   qtdMinima: z.number().min(0, "A quantidade mínima não pode ser negativa"),
   qtdMaxima: z.number().min(1, "A quantidade máxima deve ser pelo menos 1"),
+  obrigatorio: z.boolean().default(false),
   opcoes: z.array(
     z.object({
       codIntegra: z.string().optional(),
@@ -49,6 +57,7 @@ interface Adicional {
   titulo: string;
   qtdMinima: number;
   qtdMaxima: number;
+  obrigatorio: boolean;
   opcoes: { codIntegra?: string; nome: string; preco?: string }[];
 }
 
@@ -64,6 +73,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
       titulo: category.tituloAdicionalFixo,
       qtdMinima: 0,
       qtdMaxima: 1,
+      obrigatorio: false,
       opcoes: category.opcoesAdicionais || [],
     });
   }
@@ -82,7 +92,13 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
   const handleAddAdicional = () => {
     setAdicionais([
       ...adicionais,
-      { titulo: "", qtdMinima: 0, qtdMaxima: 1, opcoes: [] },
+      {
+        titulo: "",
+        qtdMinima: 0,
+        qtdMaxima: 1,
+        obrigatorio: false,
+        opcoes: [],
+      },
     ]);
   };
 
@@ -104,6 +120,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
     } else if (field === "qtdMinima" || field === "qtdMaxima") {
       newAdicionais[index][field] = Number(value);
     } else {
+      //@ts-ignore
       newAdicionais[index][field] = value;
     }
     setAdicionais(newAdicionais);
@@ -211,7 +228,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="col-span-3 md:col-span-1">
                       <FormItem>
                         <FormLabel>Título</FormLabel>
@@ -273,6 +290,34 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                           />
                         </FormControl>
                         <FormDescription>Máximo de opções</FormDescription>
+                      </FormItem>
+                    </div>
+                    <div>
+                      <FormItem>
+                        <FormLabel>Obrigatório</FormLabel>
+                        <Select
+                          value={adicional.obrigatorio ? "sim" : "nao"}
+                          onValueChange={(value) =>
+                            handleAdicionalChange(
+                              adicionalIndex,
+                              "obrigatorio",
+                              value === "sim"
+                            )
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="sim">Sim</SelectItem>
+                            <SelectItem value="nao">Não</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          É obrigatório selecionar?
+                        </FormDescription>
                       </FormItem>
                     </div>
                   </div>
