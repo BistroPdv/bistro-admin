@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import api from "@/lib/api";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import * as z from "zod";
@@ -157,11 +158,13 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
     form.setValue("adicionais", newAdicionais);
   };
 
-  const handleSubmit = (data: CategoryFormValues) => {
-    // Garantir que adicionais esteja definido no objeto data
-    data.adicionais = adicionais;
-    console.log(data);
-    onSubmit(data);
+  const handleSubmit = async (data: CategoryFormValues) => {
+    try {
+      // Garantir que adicionais esteja definido no objeto data
+      const resp = await api.post("/categorias", { ...data });
+    } catch (error) {
+      console.error("Erro ao adicionar categoria:", error);
+    }
   };
 
   return (

@@ -246,8 +246,6 @@ export function CompanySettingsForm() {
     }
   }, [configEnterprise.data, configEnterprise.isFetched]);
 
-  console.log(integrationType);
-
   return (
     <Card className="w-full max-w-4xl">
       <CardHeader>
