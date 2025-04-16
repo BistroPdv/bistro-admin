@@ -25,6 +25,7 @@ import {
 import api from "@/lib/api";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import * as z from "zod";
 
 const adicionalSchema = z.object({
@@ -64,24 +65,23 @@ interface Adicional {
 }
 
 export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
-  // Converter os dados da categoria para o formato do formulário
   const adicionaisIniciais: Adicional[] = [];
 
-  // Se a categoria existir e tiver adicionais, carregá-los
   if (category?.adicionais && category.adicionais.length > 0) {
-    // Usar os adicionais já no formato correto
     category.adicionais.forEach((adicional) => {
       adicionaisIniciais.push({
         titulo: adicional.titulo,
         qtdMinima: adicional.qtdMinima,
         qtdMaxima: adicional.qtdMaxima,
         obrigatorio: adicional.obrigatorio,
-        opcoes: adicional.opcoes || [],
+        opcoes:
+          adicional.opcoes?.map((opcao) => ({
+            ...opcao,
+            preco: opcao.preco?.toString() || "",
+          })) || [],
       });
     });
-  }
-  // Compatibilidade com formato antigo
-  else if (
+  } else if (
     category?.tipoAdicional === "adicional_fixo" &&
     category?.tituloAdicionalFixo
   ) {
@@ -90,7 +90,10 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
       qtdMinima: 0,
       qtdMaxima: 1,
       obrigatorio: false,
-      opcoes: category.opcoesAdicionais || [],
+      opcoes: (category.opcoesAdicionais || []).map((opcao) => ({
+        ...opcao,
+        preco: String(opcao.preco) || "",
+      })),
     });
   }
 
@@ -183,6 +186,9 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
         const resp = await api.post("/categorias", { ...data });
       } else {
         const resp = await api.put(`/categorias/${data.id}`, { ...data });
+        if (resp.status === 200) {
+          toast.success("Categoria atualizada com sucesso!");
+        }
       }
 
       // Passar os dados para o callback de submissão
@@ -191,6 +197,8 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
       console.error("Erro ao processar categoria:", error);
     }
   };
+
+  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
@@ -215,7 +223,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <FormLabel>Adicionais</FormLabel>
+              <FormLabel>Grupo de adicionais</FormLabel>
               <Button
                 type="button"
                 variant="outline"
@@ -243,7 +251,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
               >
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">
-                    Adicional {adicionalIndex + 1}
+                    {form.getValues(`adicionais.${adicionalIndex}.titulo`)}
                   </h4>
                   <Button
                     type="button"
@@ -256,12 +264,13 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="col-span-3 md:col-span-1">
+                  <div className="flex gap-4 w-full">
+                    <div className="w-full">
                       <FormItem>
                         <FormLabel>Título</FormLabel>
                         <FormControl>
                           <Input
+                            className="flex-1"
                             value={adicional.titulo}
                             onChange={(e) =>
                               handleAdicionalChange(
@@ -283,9 +292,10 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                         <FormLabel>Qtd. Mínima</FormLabel>
                         <FormControl>
                           <Input
+                            className="w-32"
                             type="number"
                             min="0"
-                            value={adicional.qtdMinima}
+                            value={String(adicional.qtdMinima)}
                             onChange={(e) =>
                               handleAdicionalChange(
                                 adicionalIndex,
@@ -304,9 +314,10 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                         <FormLabel>Qtd. Máxima</FormLabel>
                         <FormControl>
                           <Input
+                            className="w-32"
                             type="number"
                             min="1"
-                            value={adicional.qtdMaxima}
+                            value={String(adicional.qtdMaxima)}
                             onChange={(e) =>
                               handleAdicionalChange(
                                 adicionalIndex,
@@ -321,7 +332,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                       </FormItem>
                     </div>
                     <div>
-                      <FormItem>
+                      <FormItem className="w-32">
                         <FormLabel>Obrigatório</FormLabel>
                         <Select
                           value={adicional.obrigatorio ? "sim" : "nao"}
@@ -343,9 +354,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                             <SelectItem value="nao">Não</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          É obrigatório selecionar?
-                        </FormDescription>
+                        <FormDescription>É obrigatório?</FormDescription>
                       </FormItem>
                     </div>
                   </div>
@@ -413,7 +422,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                                 R$
                               </span>
                               <Input
-                                value={opcao.preco}
+                                value={String(opcao.preco)}
                                 onChange={(e) =>
                                   handleOpcaoChange(
                                     adicionalIndex,

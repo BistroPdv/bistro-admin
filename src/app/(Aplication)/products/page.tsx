@@ -161,7 +161,7 @@ export default function Page() {
   if (error) {
     return <div>Error loading products</div>;
   }
-
+  console.log(data?.data);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
