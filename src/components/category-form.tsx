@@ -42,6 +42,7 @@ const adicionalSchema = z.object({
 });
 
 const categoryFormSchema = z.object({
+  id: z.string().optional(),
   nome: z.string().min(1, "O nome da categoria é obrigatório"),
   cor: z.string().min(1, "A cor da categoria é obrigatória"),
   adicionais: z.array(adicionalSchema).optional(),
@@ -63,10 +64,24 @@ interface Adicional {
 }
 
 export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
-  // Converter os dados antigos para o novo formato, se necessário
+  // Converter os dados da categoria para o formato do formulário
   const adicionaisIniciais: Adicional[] = [];
 
-  if (
+  // Se a categoria existir e tiver adicionais, carregá-los
+  if (category?.adicionais && category.adicionais.length > 0) {
+    // Usar os adicionais já no formato correto
+    category.adicionais.forEach((adicional) => {
+      adicionaisIniciais.push({
+        titulo: adicional.titulo,
+        qtdMinima: adicional.qtdMinima,
+        qtdMaxima: adicional.qtdMaxima,
+        obrigatorio: adicional.obrigatorio,
+        opcoes: adicional.opcoes || [],
+      });
+    });
+  }
+  // Compatibilidade com formato antigo
+  else if (
     category?.tipoAdicional === "adicional_fixo" &&
     category?.tituloAdicionalFixo
   ) {
@@ -160,10 +175,20 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
 
   const handleSubmit = async (data: CategoryFormValues) => {
     try {
-      // Garantir que adicionais esteja definido no objeto data
-      const resp = await api.post("/categorias", { ...data });
+      // Incluir o ID da categoria se estiver editando
+      if (category?.id) {
+        data.id = category.id;
+      }
+      if (!data.id) {
+        const resp = await api.post("/categorias", { ...data });
+      } else {
+        const resp = await api.put(`/categorias/${data.id}`, { ...data });
+      }
+
+      // Passar os dados para o callback de submissão
+      onSubmit(data);
     } catch (error) {
-      console.error("Erro ao adicionar categoria:", error);
+      console.error("Erro ao processar categoria:", error);
     }
   };
 

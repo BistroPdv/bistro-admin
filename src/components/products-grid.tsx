@@ -40,7 +40,7 @@ export function ProductsGrid({
   return (
     <div className="space-y-8">
       {items.map((category) => {
-        if (category.produtos.length === 0) return null;
+        if (category.produtos?.length === 0) return null;
 
         return (
           <div key={category.id} className="space-y-4">
@@ -56,13 +56,13 @@ export function ProductsGrid({
               <h2 className="text-xl font-semibold">{category.nome}</h2>
               {category.cor && (
                 <span className="px-2 py-1 text-xs font-medium rounded-full">
-                  {category.produtos.length} produtos
+                  {category.produtos?.length} produtos
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-              {category.produtos.map((product) => (
+              {category.produtos?.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
