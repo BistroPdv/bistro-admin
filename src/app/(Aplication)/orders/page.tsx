@@ -560,7 +560,7 @@ export default function OrdersPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0 flex-1">
+            <CardContent className="p-0 flex-1 flex flex-col">
               {/* Área de ações do pedido */}
               <div className="p-3 border-b bg-muted/20 flex flex-wrap gap-2">
                 <Button
@@ -621,7 +621,7 @@ export default function OrdersPage() {
               </div>
 
               {/* Conteúdo do pedido */}
-              <ScrollArea className="h-[calc(100vh-20rem)] p-4 flex-1">
+              <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-3">
@@ -660,7 +660,7 @@ export default function OrdersPage() {
               </ScrollArea>
 
               {/* Rodapé com total */}
-              <div className="p-4 border-t sticky bottom-0 bg-card mt-auto">
+              <div className="p-4 border-t bg-card sticky bottom-0">
                 <div className="flex justify-between items-center">
                   <div className="font-bold">Total</div>
                   <div className="font-bold text-xl">
