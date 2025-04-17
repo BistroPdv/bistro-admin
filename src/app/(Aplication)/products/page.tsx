@@ -27,7 +27,7 @@ export default function Page() {
 
   const local = localStorage.getItem("user");
   const cnpj = JSON.parse(local || "");
-  const { data, isLoading, error } = useQuery<
+  const { data, isLoading, error, refetch } = useQuery<
     AxiosResponse,
     Error,
     PaginatedResult<Category>
@@ -112,9 +112,7 @@ export default function Page() {
       // Endpoint para atualizar categoria
       const endpoint = `/categorias/${formData.id}`;
       return api.put(endpoint, {
-        nome: formData.nome,
-        cor: formData.cor,
-        restaurantCnpj: cnpj.restaurantCnpj,
+        ...formData,
       });
     },
     onSuccess: () => {
@@ -142,12 +140,6 @@ export default function Page() {
       updateProductMutation.mutate({ ...data, id: editingProduct.id });
     } else {
       createProductMutation.mutate(data);
-    }
-  };
-
-  const handleCategorySubmit = (data: CategoryFormValues) => {
-    if (editingCategory) {
-      updateCategoryMutation.mutate({ ...data, id: editingCategory.id });
     }
   };
 
@@ -211,7 +203,7 @@ export default function Page() {
           </DialogHeader>
 
           <CategoryForm
-            onSubmit={handleCategorySubmit}
+            onRefresh={() => refetch()}
             category={editingCategory || undefined}
           />
         </DialogContent>

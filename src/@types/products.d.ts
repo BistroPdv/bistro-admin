@@ -14,16 +14,17 @@ export interface Category {
   Impressora: PrintTypes;
   tipoAdicional?: string; // Campo mantido para compatibilidade com dados existentes
   tituloAdicionalFixo?: string; // Campo mantido para compatibilidade com dados existentes
-  opcoesAdicionais?: { nome: string; preco?: number }[]; // Campo mantido para compatibilidade com dados existentes
+  opcoesAdicionais?: { id?: string; nome: string; preco?: number }[]; // Campo mantido para compatibilidade com dados existentes
   adicionais?: Adicional[];
 }
 
 export interface Adicional {
+  id?: string;
   titulo: string;
   qtdMinima: number;
   qtdMaxima: number;
   obrigatorio: boolean;
-  opcoes: { nome: string; preco?: number }[];
+  opcoes: { id?: string; nome: string; preco?: number }[];
 }
 
 export interface PrintTypes {

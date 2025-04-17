@@ -10,8 +10,24 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { RiShoppingBag3Line } from "@remixicon/react";
+import {
+  RiArrowLeftSLine,
+  RiCheckDoubleLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiFilter3Line,
+  RiPrinterLine,
+  RiSearch2Line,
+  RiShoppingBag3Line,
+} from "@remixicon/react";
 import { useEffect, useState } from "react";
 
 // Tipo para os pedidos
@@ -199,10 +215,22 @@ export default function OrdersPage() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>(mockOrders);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [tableFilter, setTableFilter] = useState<string>("");
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [showOrdersList, setShowOrdersList] = useState<boolean>(true);
 
   // Seleciona um pedido para visualização
   const handleSelectOrder = (order: Order) => {
     setSelectedOrder(order);
+    // Em telas pequenas, esconde a lista de pedidos ao selecionar um pedido
+    if (window.innerWidth < 768) {
+      setShowOrdersList(false);
+    }
+  };
+
+  // Volta para a lista de pedidos (em mobile)
+  const handleBackToList = () => {
+    setShowOrdersList(true);
   };
 
   // Filtra os pedidos com base no status e data
@@ -219,13 +247,20 @@ export default function OrdersPage() {
       result = result.filter((order) => order.createdAt.includes(dateFilter));
     }
 
+    // Filtro por mesa
+    if (tableFilter) {
+      result = result.filter((order) =>
+        order.table.toLowerCase().includes(tableFilter.toLowerCase())
+      );
+    }
+
     setFilteredOrders(result);
   };
 
   // Atualiza os filtros quando eles mudam
   useEffect(() => {
     filterOrders();
-  }, [statusFilter, dateFilter, orders]);
+  }, [statusFilter, dateFilter, tableFilter, orders]);
 
   // Função para reimprimir o pedido
   const handleReprint = () => {
@@ -236,257 +271,274 @@ export default function OrdersPage() {
     }
   };
 
+  // Função para atualizar o status do pedido
+  const handleUpdateStatus = (newStatus: Order["status"]) => {
+    if (selectedOrder) {
+      // Aqui seria implementada a lógica de atualização do status no backend
+      const updatedOrder = { ...selectedOrder, status: newStatus };
+      const updatedOrders = orders.map((order) =>
+        order.id === selectedOrder.id ? updatedOrder : order
+      );
+      setOrders(updatedOrders);
+      setSelectedOrder(updatedOrder);
+      alert(
+        `Status do pedido ${
+          selectedOrder.number
+        } atualizado para ${getStatusText(newStatus)}!`
+      );
+    }
+  };
+
   return (
-    <div className="flex h-full gap-4">
-      {/* Sidebar de pedidos - ocupa flex: 1 */}
-      <Card className="flex-1 border rounded-lg overflow-hidden">
-        <CardHeader className="pb-3">
-          <CardTitle>Pedidos</CardTitle>
-          <CardDescription>Gerencie os pedidos do restaurante</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {/* Barra de filtros */}
-          <div className="px-4 py-2 border-b flex flex-col sm:flex-row gap-2">
-            <div className="flex-1">
-              <select
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">Todos os status</option>
-                <option value="pending">Pendente</option>
-                <option value="preparing">Preparando</option>
-                <option value="ready">Pronto</option>
-                <option value="delivered">Entregue</option>
-                <option value="canceled">Cancelado</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <Input
-                type="date"
-                placeholder="Filtrar por data"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full"
-              />
-            </div>
-          </div>
-          <ScrollArea className="h-[calc(100vh-15rem)] px-4">
-            <div className="space-y-2 pb-4">
-              {filteredOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className={`p-3 rounded-md cursor-pointer transition-colors select-none relative ${
-                    selectedOrder?.id === order.id
-                      ? "bg-muted border-2 border-primary shadow-sm dark:bg-muted/80 dark:border-primary/70 dark:shadow-primary/20"
-                      : "hover:bg-muted/50 border border-transparent"
-                  }`}
-                  onClick={() => handleSelectOrder(order)}
+    <div className="flex flex-col h-full flex-1 pt-6">
+      {/* Barra superior com título e botões de ação */}
+      <div className="flex justify-between items-center mb-4 px-1">
+        <h1 className="text-xl font-bold">Pedidos</h1>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1"
+          >
+            <RiFilter3Line className="h-4 w-4" />
+            Filtros
+          </Button>
+          {!showOrdersList && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToList}
+              className="md:hidden flex items-center gap-1"
+            >
+              <RiArrowLeftSLine className="h-4 w-4" />
+              Voltar
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Área de filtros (colapsável) */}
+      {showFilters && (
+        <Card className="w-full mb-4 border rounded-lg overflow-hidden">
+          <CardContent className="p-3 flex-1">
+            <div className="flex flex-col md:flex-row gap-3 flex-1">
+              <div className="w-full md:w-1/3">
+                <label className="text-sm font-medium mb-1 block">Status</label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => setStatusFilter(value)}
                 >
-                  {selectedOrder?.id === order.id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <div className="font-medium">{order.number}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {order.table}
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="preparing">Preparando</SelectItem>
+                    <SelectItem value="ready">Pronto</SelectItem>
+                    <SelectItem value="delivered">Entregue</SelectItem>
+                    <SelectItem value="canceled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full md:w-1/3">
+                <label className="text-sm font-medium mb-1 block">Data</label>
+                <div className="relative">
+                  <Input
+                    type="date"
+                    placeholder="Filtrar por data"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              <div className="w-full md:w-1/3">
+                <label className="text-sm font-medium mb-1 block">Mesa</label>
+                <div className="relative">
+                  <RiSearch2Line className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar por mesa"
+                    value={tableFilter}
+                    onChange={(e) => setTableFilter(e.target.value)}
+                    className="w-full pl-9"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-col md:flex-row h-[calc(100vh-12rem)] gap-4 flex-1 overflow-auto">
+        {/* Lista de pedidos - visível apenas quando showOrdersList é true em mobile */}
+        {(showOrdersList || window.innerWidth >= 768) && (
+          <Card className="w-full md:w-1/3 lg:w-1/4 border rounded-lg overflow-hidden">
+            <CardContent className="p-0 flex-1">
+              <ScrollArea className="h-[calc(100vh-16rem)] px-2 py-2">
+                <div className="space-y-2 pb-2">
+                  {filteredOrders.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      Nenhum pedido encontrado
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="flex items-center gap-2">
+                  ) : (
+                    filteredOrders.map((order) => (
                       <div
-                        className={`w-2 h-2 rounded-full ${getStatusColor(
-                          order.status
-                        )}`}
-                      />
-                      <span className="text-xs">
-                        {getStatusText(order.status)}
-                      </span>
-                    </div>
-                    <div className="font-medium">
-                      {formatCurrency(order.total)}
-                    </div>
+                        key={order.id}
+                        className={`p-3 rounded-md cursor-pointer transition-colors select-none relative ${
+                          selectedOrder?.id === order.id
+                            ? "bg-muted border-2 border-primary shadow-sm dark:bg-muted/80 dark:border-primary/70 dark:shadow-primary/20"
+                            : "hover:bg-muted/50 border border-transparent"
+                        }`}
+                        onClick={() => handleSelectOrder(order)}
+                      >
+                        {selectedOrder?.id === order.id && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">{order.number}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.table}
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-3 h-3 rounded-full ${getStatusColor(
+                                order.status
+                              )}`}
+                            />
+                            <span className="text-xs">
+                              {getStatusText(order.status)}
+                            </span>
+                          </div>
+                          <div className="font-medium min-w-[90px] text-right">
+                            {formatCurrency(order.total)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Área de detalhes do pedido - visível apenas quando um pedido está selecionado ou showOrdersList é false em mobile */}
+        {selectedOrder && (!showOrdersList || window.innerWidth >= 768) && (
+          <Card className="w-full md:w-2/3 lg:w-3/4 border rounded-lg overflow-hidden flex flex-col">
+            <CardHeader className="bg-muted/50 pb-3 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/10 p-2 rounded-md">
+                    <RiShoppingBag3Line className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">
+                      {selectedOrder.number} - {selectedOrder.table}
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Criado em {formatDate(selectedOrder.createdAt)}
+                    </CardDescription>
                   </div>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Área de detalhes do pedido - ocupa flex: 2 */}
-      <Card className="flex-[2] border rounded-lg overflow-hidden">
-        {selectedOrder ? (
-          <>
-            <CardHeader className="bg-muted/50 pb-4 border-b">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary/10 p-2 rounded-md">
-                      <RiShoppingBag3Line className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">
-                        {selectedOrder.number} - {selectedOrder.table}
-                      </CardTitle>
-                      <CardDescription>
-                        Criado em {formatDate(selectedOrder.createdAt)}
-                      </CardDescription>
-                    </div>
-                    <div
-                      className={`ml-2 px-3 py-1 text-xs font-medium rounded-full text-white ${getStatusColor(
-                        selectedOrder.status
-                      )}`}
-                    >
-                      {getStatusText(selectedOrder.status)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleReprint}
-                      className="gap-1"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-printer"
-                      >
-                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                        <rect width="12" height="8" x="6" y="14"></rect>
-                      </svg>
-                      Reimprimir
-                    </Button>
-
-                    {selectedOrder.status === "pending" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-chef-hat"
-                        >
-                          <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"></path>
-                          <line x1="6" x2="18" y1="17" y2="17"></line>
-                        </svg>
-                        Iniciar Preparo
-                      </Button>
-                    )}
-                    {selectedOrder.status === "preparing" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-check-circle"
-                        >
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        Marcar como Pronto
-                      </Button>
-                    )}
-                    {selectedOrder.status === "ready" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-check-check"
-                        >
-                          <path d="m5 12 5 5L20 7"></path>
-                        </svg>
-                        Marcar como Entregue
-                      </Button>
-                    )}
-                    {(selectedOrder.status === "pending" ||
-                      selectedOrder.status === "preparing") && (
-                      <Button variant="destructive" size="sm" className="gap-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-x"
-                        >
-                          <path d="M18 6 6 18"></path>
-                          <path d="m6 6 12 12"></path>
-                        </svg>
-                        Cancelar
-                      </Button>
-                    )}
-                  </div>
+                <div
+                  className={`px-3 py-1 text-xs font-medium rounded-full text-white ${getStatusColor(
+                    selectedOrder.status
+                  )}`}
+                >
+                  {getStatusText(selectedOrder.status)}
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-col h-[calc(100vh-12rem)] relative pt-6">
-              <div className="flex-grow overflow-auto">
+
+            <CardContent className="p-0 flex-1">
+              {/* Área de ações do pedido */}
+              <div className="p-3 border-b bg-muted/20 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReprint}
+                  className="gap-1 flex-1 md:flex-none"
+                >
+                  <RiPrinterLine className="h-4 w-4" />
+                  <span className="whitespace-nowrap">Reimprimir</span>
+                </Button>
+
+                {selectedOrder.status === "pending" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200 flex-1 md:flex-none"
+                    onClick={() => handleUpdateStatus("preparing")}
+                  >
+                    <RiShoppingBag3Line className="h-4 w-4" />
+                    <span className="whitespace-nowrap">Iniciar Preparo</span>
+                  </Button>
+                )}
+                {selectedOrder.status === "preparing" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 bg-green-50 text-green-600 hover:bg-green-100 border-green-200 flex-1 md:flex-none"
+                    onClick={() => handleUpdateStatus("ready")}
+                  >
+                    <RiCheckLine className="h-4 w-4" />
+                    <span className="whitespace-nowrap">Marcar Pronto</span>
+                  </Button>
+                )}
+                {selectedOrder.status === "ready" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200 flex-1 md:flex-none"
+                    onClick={() => handleUpdateStatus("delivered")}
+                  >
+                    <RiCheckDoubleLine className="h-4 w-4" />
+                    <span className="whitespace-nowrap">Marcar Entregue</span>
+                  </Button>
+                )}
+                {(selectedOrder.status === "pending" ||
+                  selectedOrder.status === "preparing") && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-1 flex-1 md:flex-none"
+                    onClick={() => handleUpdateStatus("canceled")}
+                  >
+                    <RiCloseLine className="h-4 w-4" />
+                    <span className="whitespace-nowrap">Cancelar</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Conteúdo do pedido */}
+              <ScrollArea className="h-[calc(100vh-20rem)] p-4 flex-1">
                 <div className="space-y-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-xl font-semibold tracking-tight">
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="text-lg font-semibold tracking-tight">
                         Itens do Pedido
                       </h3>
                     </div>
-                    <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
+                    <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
                       {selectedOrder.items.map((item, index) => (
                         <div key={item.id}>
-                          <div className="flex justify-between py-3">
-                            <div>
-                              <div className="font-medium">
+                          <div className="flex justify-between py-2 gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">
                                 {item.quantity}x {item.name}
                               </div>
                               {item.notes && (
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-sm text-muted-foreground truncate">
                                   Obs: {item.notes}
                                 </div>
                               )}
                             </div>
-                            <div className="font-medium">
+                            <div className="font-medium min-w-[90px] text-right">
                               {formatCurrency(item.price * item.quantity)}
                             </div>
                           </div>
@@ -498,10 +550,11 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-auto pt-4 sticky bottom-0 bg-card">
-                <Separator />
-                <div className="flex justify-between items-center mt-4">
+              </ScrollArea>
+
+              {/* Rodapé com total */}
+              <div className="p-4 border-t sticky bottom-0 bg-card mt-auto">
+                <div className="flex justify-between items-center">
                   <div className="font-bold">Total</div>
                   <div className="font-bold text-xl">
                     {formatCurrency(selectedOrder.total)}
@@ -509,18 +562,21 @@ export default function OrdersPage() {
                 </div>
               </div>
             </CardContent>
-          </>
-        ) : (
+          </Card>
+        )}
+
+        {/* Mensagem quando nenhum pedido está selecionado */}
+        {!selectedOrder && !showOrdersList && (
           <div className="flex h-full items-center justify-center p-6 text-center">
             <div className="space-y-2">
               <h3 className="text-xl font-medium">Nenhum pedido selecionado</h3>
               <p className="text-muted-foreground">
-                Selecione um pedido na lista ao lado para visualizar os detalhes
+                Selecione um pedido na lista para visualizar os detalhes
               </p>
             </div>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

@@ -23,18 +23,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/api";
+import { Printer } from "@/schemas/printer-schema";
 import { Plus, Save, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
 const adicionalSchema = z.object({
+  id: z.string().optional(),
   titulo: z.string().min(1, "O título do adicional é obrigatório"),
   qtdMinima: z.number().min(0, "A quantidade mínima não pode ser negativa"),
   qtdMaxima: z.number().min(1, "A quantidade máxima deve ser pelo menos 1"),
   obrigatorio: z.boolean().default(false),
   opcoes: z.array(
     z.object({
+      id: z.string().optional(),
       codIntegra: z.string().optional(),
       nome: z.string().min(1, "O nome da opção é obrigatório"),
       preco: z.string().optional(),
@@ -46,36 +49,41 @@ const categoryFormSchema = z.object({
   id: z.string().optional(),
   nome: z.string().min(1, "O nome da categoria é obrigatório"),
   cor: z.string().min(1, "A cor da categoria é obrigatória"),
+  impressoraId: z.string().optional(),
   adicionais: z.array(adicionalSchema).optional(),
 });
 
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 
 interface CategoryFormProps {
-  onSubmit: (data: CategoryFormValues) => void;
+  onRefresh: () => void;
   category?: Category;
 }
 
 interface Adicional {
+  id?: string;
   titulo: string;
   qtdMinima: number;
   qtdMaxima: number;
   obrigatorio: boolean;
-  opcoes: { codIntegra?: string; nome: string; preco?: string }[];
+  opcoes: { id?: string; codIntegra?: string; nome: string; preco?: string }[];
 }
 
-export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
+export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
+  const [printers, setPrinters] = useState<Printer[]>([]);
   const adicionaisIniciais: Adicional[] = [];
 
   if (category?.adicionais && category.adicionais.length > 0) {
     category.adicionais.forEach((adicional) => {
       adicionaisIniciais.push({
+        id: adicional.id,
         titulo: adicional.titulo,
         qtdMinima: adicional.qtdMinima,
         qtdMaxima: adicional.qtdMaxima,
         obrigatorio: adicional.obrigatorio,
         opcoes:
           adicional.opcoes?.map((opcao) => ({
+            id: opcao.id, // Preservando o ID da opção
             ...opcao,
             preco: opcao.preco?.toString() || "",
           })) || [],
@@ -86,11 +94,13 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
     category?.tituloAdicionalFixo
   ) {
     adicionaisIniciais.push({
+      id: category.id,
       titulo: category.tituloAdicionalFixo,
       qtdMinima: 0,
       qtdMaxima: 1,
       obrigatorio: false,
       opcoes: (category.opcoesAdicionais || []).map((opcao) => ({
+        id: opcao.id, // Preservando o ID da opção se existir
         ...opcao,
         preco: String(opcao.preco) || "",
       })),
@@ -102,23 +112,44 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
+      id: category?.id,
       nome: category?.nome || "",
       cor: category?.cor || "#000000",
+      impressoraId: category?.Impressora?.id || "",
       adicionais: adicionaisIniciais,
     },
   });
 
+  useEffect(() => {
+    const fetchPrinters = async () => {
+      try {
+        // Obter o CNPJ do restaurante do localStorage ou de onde estiver armazenado
+        const cnpjData = JSON.parse(localStorage.getItem("user") || "{}");
+        const response = await api.get(
+          `/restaurantCnpj/${cnpjData.restaurantCnpj}/printers`
+        );
+        if (response.data) {
+          setPrinters(response.data?.data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar impressoras:", error);
+      }
+    };
+
+    fetchPrinters();
+  }, []);
+
   const handleAddAdicional = () => {
-    setAdicionais([
-      ...adicionais,
-      {
-        titulo: "",
-        qtdMinima: 0,
-        qtdMaxima: 1,
-        obrigatorio: false,
-        opcoes: [],
-      },
-    ]);
+    const novoAdicional = {
+      titulo: "",
+      qtdMinima: 0,
+      qtdMaxima: 1,
+      obrigatorio: false,
+      opcoes: [],
+    };
+    const novosAdicionais = [...adicionais, novoAdicional];
+    setAdicionais(novosAdicionais);
+    form.setValue("adicionais", novosAdicionais);
   };
 
   const handleRemoveAdicional = (index: number) => {
@@ -149,6 +180,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
   const handleAddOpcao = (adicionalIndex: number) => {
     const newAdicionais = [...adicionais];
     newAdicionais[adicionalIndex].opcoes.push({
+      id: undefined, // Adicionando campo id para novas opções
       nome: "",
       preco: "",
       codIntegra: "",
@@ -167,7 +199,7 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
   const handleOpcaoChange = (
     adicionalIndex: number,
     opcaoIndex: number,
-    field: "codIntegra" | "nome" | "preco",
+    field: "codIntegra" | "nome" | "preco" | "id",
     value: string
   ) => {
     const newAdicionais = [...adicionais];
@@ -182,44 +214,94 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
       if (category?.id) {
         data.id = category.id;
       }
+
+      // Converter "none" para string vazia ou null para o backend
+      if (data.impressoraId === "none") {
+        data.impressoraId = "";
+      }
+
       if (!data.id) {
         const resp = await api.post("/categorias", { ...data });
+        if (resp.status === 201 || resp.status === 200) {
+          toast.success("Categoria criada com sucesso!");
+          onRefresh?.();
+        }
       } else {
         const resp = await api.put(`/categorias/${data.id}`, { ...data });
         if (resp.status === 200) {
           toast.success("Categoria atualizada com sucesso!");
+          onRefresh?.();
         }
       }
-
-      // Passar os dados para o callback de submissão
-      onSubmit(data);
     } catch (error) {
       console.error("Erro ao processar categoria:", error);
+      toast.error("Erro ao salvar categoria. Tente novamente.");
     }
   };
-
-  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="nome"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome da Categoria</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex: Lanches" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Digite o nome da categoria que será exibida no cardápio.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Campo oculto para o ID */}
+          {category?.id && (
+            <FormField
+              control={form.control}
+              name="id"
+              render={({ field }) => <input type="hidden" {...field} />}
+            />
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="nome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome da Categoria</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Lanches" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Digite o nome da categoria que será exibida no cardápio.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="impressoraId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Impressora</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma impressora" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {printers?.map((printer) => (
+                        <SelectItem key={printer.id} value={printer.id || ""}>
+                          {printer.nome}
+                        </SelectItem>
+                      )) || []}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Selecione a impressora para esta categoria
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -256,10 +338,12 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                   <Button
                     type="button"
                     variant="destructive"
-                    size="icon"
+                    size="sm"
                     onClick={() => handleRemoveAdicional(adicionalIndex)}
+                    className="flex items-center gap-1"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span>Excluir grupo</span>
                   </Button>
                 </div>
 
@@ -437,13 +521,15 @@ export function CategoryForm({ onSubmit, category }: CategoryFormProps) {
                             </div>
                             <Button
                               type="button"
-                              variant="destructive"
+                              variant="outline"
                               size="icon"
+                              className="border-red-200 hover:bg-red-100 hover:text-red-600"
                               onClick={() =>
                                 handleRemoveOpcao(adicionalIndex, opcaoIndex)
                               }
+                              title="Excluir opção"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           </div>
                         </div>
