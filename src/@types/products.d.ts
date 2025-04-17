@@ -11,7 +11,7 @@ export interface Category {
   createAt: string;
   updateAt: any;
   produtos: Product[];
-  Impressora: PrintTypes;
+  Impressora: PrintTypes | null;
   tipoAdicional?: string; // Campo mantido para compatibilidade com dados existentes
   tituloAdicionalFixo?: string; // Campo mantido para compatibilidade com dados existentes
   opcoesAdicionais?: { id?: string; nome: string; preco?: number }[]; // Campo mantido para compatibilidade com dados existentes

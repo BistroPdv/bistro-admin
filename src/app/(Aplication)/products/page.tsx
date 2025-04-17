@@ -12,8 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { Product, ProductFormValues } from "@/schemas/product-schema";
+import { RiSearchLine } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { useState } from "react";
@@ -23,6 +25,7 @@ export default function Page() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   const local = localStorage.getItem("user");
@@ -150,24 +153,46 @@ export default function Page() {
 
   const handleDeleteProduct = (product: Product) => {};
 
+  const filteredCategories =
+    data?.data?.map((category) => ({
+      ...category,
+      produtos: category.produtos?.filter((product) =>
+        product.nome.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    })) || [];
+
   if (error) {
     return <div>Error loading products</div>;
   }
-  console.log(data?.data);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Produtos</h1>
-        <Button onClick={handleAddNewProduct}>Adicionar Produto</Button>
+    <div className="flex flex-col h-full">
+      <div className="flex-none space-y-6 pb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Produtos</h1>
+          <Button onClick={handleAddNewProduct}>Adicionar Produto</Button>
+        </div>
+
+        <div className="relative">
+          <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar produtos..."
+            className="pl-9"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
-      <ProductsGrid
-        loading={isLoading}
-        items={data?.data || []}
-        onEditProduct={handleEditProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onEditCategory={handleEditCategory}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <ProductsGrid
+          loading={isLoading}
+          items={filteredCategories}
+          onEditProduct={handleEditProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onEditCategory={handleEditCategory}
+        />
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="md:min-w-2xl max-w-4xl">

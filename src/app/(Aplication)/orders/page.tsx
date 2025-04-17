@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import api from "@/lib/api";
 import {
   RiArrowLeftSLine,
   RiCheckDoubleLine,
@@ -28,16 +29,28 @@ import {
   RiSearch2Line,
   RiShoppingBag3Line,
 } from "@remixicon/react";
-import { useEffect, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 // Tipo para os pedidos
 type Order = {
   id: string;
-  number: string;
-  table: string;
-  status: "pending" | "preparing" | "ready" | "delivered" | "canceled";
-  items: OrderItem[];
-  total: number;
+  pdvCodPedido: string;
+  mesa: {
+    numero: number;
+    id: string;
+  };
+  status: "ABERTO" | "FINALIZADO" | "CANCELADO";
+  produtos: {
+    produto: {
+      nome: string;
+      preco: number;
+      descricao: string;
+      codigo: string;
+    };
+    quantidade: number;
+    status: string;
+  }[];
   createdAt: string;
 };
 
@@ -50,105 +63,177 @@ type OrderItem = {
   notes?: string;
 };
 
+interface PedidoData {
+  id: string;
+  status: "ABERTO" | "FINALIZADO" | "CANCELADO";
+  pdvCodPedido: string;
+  mesa: {
+    numero: number;
+    id: string;
+  };
+  produtos: {
+    produto: {
+      nome: string;
+      preco: number;
+      descricao: string;
+      codigo: string;
+    };
+    quantidade: number;
+    status: string;
+  }[];
+  createdAt: string;
+}
+
+interface PedidoResponseData {
+  data: PedidoData[];
+  meta: {
+    total: number;
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+  };
+}
+
 // Dados de exemplo para demonstração
 const mockOrders: Order[] = [
   {
     id: "1",
-    number: "#001",
-    table: "Mesa 01",
-    status: "pending",
-    items: [
+    pdvCodPedido: "#001",
+    mesa: {
+      numero: 1,
+      id: "mesa1",
+    },
+    status: "ABERTO",
+    produtos: [
       {
-        id: "item1",
-        name: "X-Burger",
-        quantity: 2,
-        price: 25.9,
+        produto: {
+          nome: "X-Burger",
+          preco: 25.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 2,
+        status: "",
       },
       {
-        id: "item2",
-        name: "Refrigerante",
-        quantity: 2,
-        price: 6.5,
-        notes: "Sem gelo",
+        produto: {
+          nome: "Refrigerante",
+          preco: 6.5,
+          descricao: "Sem gelo",
+          codigo: "",
+        },
+        quantidade: 2,
+        status: "",
       },
     ],
-    total: 64.8,
     createdAt: "2023-06-15T14:30:00",
   },
   {
     id: "2",
-    number: "#002",
-    table: "Mesa 03",
-    status: "preparing",
-    items: [
+    pdvCodPedido: "#002",
+    mesa: {
+      numero: 3,
+      id: "mesa3",
+    },
+    status: "FINALIZADO",
+    produtos: [
       {
-        id: "item3",
-        name: "Salada Caesar",
-        quantity: 1,
-        price: 28.9,
+        produto: {
+          nome: "Salada Caesar",
+          preco: 28.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 1,
+        status: "",
       },
       {
-        id: "item4",
-        name: "Água",
-        quantity: 1,
-        price: 4.5,
+        produto: {
+          nome: "Água",
+          preco: 4.5,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 1,
+        status: "",
       },
     ],
-    total: 33.4,
     createdAt: "2023-06-15T14:45:00",
   },
   {
     id: "3",
-    number: "#003",
-    table: "Mesa 05",
-    status: "ready",
-    items: [
+    pdvCodPedido: "#003",
+    mesa: {
+      numero: 5,
+      id: "mesa5",
+    },
+    status: "FINALIZADO",
+    produtos: [
       {
-        id: "item5",
-        name: "Pizza Margherita",
-        quantity: 1,
-        price: 45.9,
+        produto: {
+          nome: "Pizza Margherita",
+          preco: 45.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 1,
+        status: "",
       },
     ],
-    total: 45.9,
     createdAt: "2023-06-15T15:00:00",
   },
   {
     id: "4",
-    number: "#004",
-    table: "Mesa 02",
-    status: "delivered",
-    items: [
+    pdvCodPedido: "#004",
+    mesa: {
+      numero: 2,
+      id: "mesa2",
+    },
+    status: "FINALIZADO",
+    produtos: [
       {
-        id: "item6",
-        name: "Espaguete à Bolonhesa",
-        quantity: 2,
-        price: 32.9,
+        produto: {
+          nome: "Espaguete à Bolonhesa",
+          preco: 32.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 2,
+        status: "",
       },
       {
-        id: "item7",
-        name: "Vinho Tinto",
-        quantity: 1,
-        price: 89.9,
+        produto: {
+          nome: "Vinho Tinto",
+          preco: 89.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 1,
+        status: "",
       },
     ],
-    total: 155.7,
     createdAt: "2023-06-15T13:15:00",
   },
   {
     id: "5",
-    number: "#005",
-    table: "Mesa 07",
-    status: "canceled",
-    items: [
+    pdvCodPedido: "#005",
+    mesa: {
+      numero: 7,
+      id: "mesa7",
+    },
+    status: "CANCELADO",
+    produtos: [
       {
-        id: "item8",
-        name: "Risoto de Camarão",
-        quantity: 1,
-        price: 58.9,
+        produto: {
+          nome: "Risoto de Camarão",
+          preco: 58.9,
+          descricao: "",
+          codigo: "",
+        },
+        quantidade: 1,
+        status: "",
       },
     ],
-    total: 58.9,
     createdAt: "2023-06-15T12:30:00",
   },
 ];
@@ -176,15 +261,11 @@ const formatDate = (dateString: string) => {
 // Função para obter a cor do status
 const getStatusColor = (status: Order["status"]) => {
   switch (status) {
-    case "pending":
+    case "ABERTO":
       return "bg-yellow-500";
-    case "preparing":
-      return "bg-blue-500";
-    case "ready":
+    case "FINALIZADO":
       return "bg-green-500";
-    case "delivered":
-      return "bg-gray-500";
-    case "canceled":
+    case "CANCELADO":
       return "bg-red-500";
     default:
       return "bg-gray-300";
@@ -194,15 +275,11 @@ const getStatusColor = (status: Order["status"]) => {
 // Função para obter o texto do status
 const getStatusText = (status: Order["status"]) => {
   switch (status) {
-    case "pending":
+    case "ABERTO":
       return "Pendente";
-    case "preparing":
-      return "Preparando";
-    case "ready":
-      return "Pronto";
-    case "delivered":
-      return "Entregue";
-    case "canceled":
+    case "FINALIZADO":
+      return "Finalizado";
+    case "CANCELADO":
       return "Cancelado";
     default:
       return "Desconhecido";
@@ -210,17 +287,39 @@ const getStatusText = (status: Order["status"]) => {
 };
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(mockOrders);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
   const [tableFilter, setTableFilter] = useState<string>("");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showOrdersList, setShowOrdersList] = useState<boolean>(true);
 
+  // Query para carregar os pedidos com scroll infinito
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
+    useInfiniteQuery({
+      queryKey: ["pedidos", statusFilter, dateFilter, tableFilter],
+      queryFn: async ({ pageParam = 1 }) => {
+        const response = await api.get("/pedidos", {
+          params: {
+            page: pageParam,
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            date: dateFilter || undefined,
+            table: tableFilter || undefined,
+          },
+        });
+        return response.data;
+      },
+      getNextPageParam: (lastPage) => {
+        if (lastPage.meta.currentPage < lastPage.meta.lastPage) {
+          return lastPage.meta.currentPage + 1;
+        }
+        return undefined;
+      },
+      initialPageParam: 1,
+    });
+
   // Seleciona um pedido para visualização
-  const handleSelectOrder = (order: Order) => {
+  const handleSelectOrder = (order: PedidoData) => {
     setSelectedOrder(order);
     // Em telas pequenas, esconde a lista de pedidos ao selecionar um pedido
     if (window.innerWidth < 768) {
@@ -233,41 +332,24 @@ export default function OrdersPage() {
     setShowOrdersList(true);
   };
 
-  // Filtra os pedidos com base no status e data
-  const filterOrders = () => {
-    let result = [...orders];
-
-    // Filtro por status
-    if (statusFilter !== "all") {
-      result = result.filter((order) => order.status === statusFilter);
+  // Função para carregar mais pedidos quando o usuário rola até o final
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+    if (
+      scrollHeight - scrollTop === clientHeight &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
     }
-
-    // Filtro por data (simplificado - apenas verifica se a data contém a string)
-    if (dateFilter) {
-      result = result.filter((order) => order.createdAt.includes(dateFilter));
-    }
-
-    // Filtro por mesa
-    if (tableFilter) {
-      result = result.filter((order) =>
-        order.table.toLowerCase().includes(tableFilter.toLowerCase())
-      );
-    }
-
-    setFilteredOrders(result);
   };
-
-  // Atualiza os filtros quando eles mudam
-  useEffect(() => {
-    filterOrders();
-  }, [statusFilter, dateFilter, tableFilter, orders]);
 
   // Função para reimprimir o pedido
   const handleReprint = () => {
     if (selectedOrder) {
-      console.log(`Reimprimindo pedido ${selectedOrder.number}`);
+      console.log(`Reimprimindo pedido ${selectedOrder.pdvCodPedido}`);
       // Aqui seria implementada a lógica de reimpressão
-      alert(`Pedido ${selectedOrder.number} enviado para impressão!`);
+      alert(`Pedido ${selectedOrder.pdvCodPedido} enviado para impressão!`);
     }
   };
 
@@ -276,14 +358,10 @@ export default function OrdersPage() {
     if (selectedOrder) {
       // Aqui seria implementada a lógica de atualização do status no backend
       const updatedOrder = { ...selectedOrder, status: newStatus };
-      const updatedOrders = orders.map((order) =>
-        order.id === selectedOrder.id ? updatedOrder : order
-      );
-      setOrders(updatedOrders);
       setSelectedOrder(updatedOrder);
       alert(
         `Status do pedido ${
-          selectedOrder.number
+          selectedOrder.pdvCodPedido
         } atualizado para ${getStatusText(newStatus)}!`
       );
     }
@@ -334,11 +412,9 @@ export default function OrdersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="preparing">Preparando</SelectItem>
-                    <SelectItem value="ready">Pronto</SelectItem>
-                    <SelectItem value="delivered">Entregue</SelectItem>
-                    <SelectItem value="canceled">Cancelado</SelectItem>
+                    <SelectItem value="ABERTO">Pendente</SelectItem>
+                    <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                    <SelectItem value="CANCELADO">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -373,53 +449,81 @@ export default function OrdersPage() {
       )}
 
       <div className="flex flex-col md:flex-row h-[calc(100vh-12rem)] gap-4 flex-1 overflow-auto">
-        {/* Lista de pedidos - visível apenas quando showOrdersList é true em mobile */}
         {(showOrdersList || window.innerWidth >= 768) && (
           <Card className="w-full md:w-1/3 lg:w-1/4 border rounded-lg overflow-hidden">
             <CardContent className="p-0 flex-1">
-              <ScrollArea className="h-[calc(100vh-16rem)] px-2 py-2">
+              <ScrollArea
+                className="h-[calc(100vh-16rem)] px-2 py-2"
+                onScroll={handleScroll}
+              >
                 <div className="space-y-2 pb-2">
-                  {filteredOrders.length === 0 ? (
+                  {status === "pending" ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      Carregando pedidos...
+                    </div>
+                  ) : data?.pages[0].data.length === 0 ? (
                     <div className="p-4 text-center text-muted-foreground">
                       Nenhum pedido encontrado
                     </div>
                   ) : (
-                    filteredOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className={`p-3 rounded-md cursor-pointer transition-colors select-none relative ${
-                          selectedOrder?.id === order.id
-                            ? "bg-muted border-2 border-primary shadow-sm dark:bg-muted/80 dark:border-primary/70 dark:shadow-primary/20"
-                            : "hover:bg-muted/50 border border-transparent"
-                        }`}
-                        onClick={() => handleSelectOrder(order)}
-                      >
-                        {selectedOrder?.id === order.id && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
-                        )}
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">{order.number}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {order.table}
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                          <div className="flex items-center gap-2">
+                    <>
+                      {data?.pages.map((page, pageIndex) => (
+                        <div key={pageIndex}>
+                          {page.data.map((order: PedidoData) => (
                             <div
-                              className={`w-3 h-3 rounded-full ${getStatusColor(
-                                order.status
-                              )}`}
-                            />
-                            <span className="text-xs">
-                              {getStatusText(order.status)}
-                            </span>
-                          </div>
-                          <div className="font-medium min-w-[90px] text-right">
-                            {formatCurrency(order.total)}
-                          </div>
+                              key={order.id}
+                              className={`p-3 rounded-md cursor-pointer transition-colors select-none relative ${
+                                selectedOrder?.id === order.id
+                                  ? "bg-muted border-2 border-primary shadow-sm dark:bg-muted/80 dark:border-primary/70 dark:shadow-primary/20"
+                                  : "hover:bg-muted/50 border border-transparent"
+                              }`}
+                              onClick={() => handleSelectOrder(order)}
+                            >
+                              {selectedOrder?.id === order.id && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
+                              )}
+                              <div className="flex justify-between items-center">
+                                <div className="font-medium">
+                                  {order.pdvCodPedido}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  Mesa {order.mesa.numero}
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center mt-2">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 rounded-full ${getStatusColor(
+                                      order.status as Order["status"]
+                                    )}`}
+                                  />
+                                  <span className="text-xs">
+                                    {getStatusText(
+                                      order.status as Order["status"]
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="font-medium min-w-[90px] text-right">
+                                  {formatCurrency(
+                                    order.produtos.reduce(
+                                      (total, item) =>
+                                        total +
+                                        item.produto.preco * item.quantidade,
+                                      0
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      {isFetchingNextPage && (
+                        <div className="p-4 text-center text-muted-foreground">
+                          Carregando mais pedidos...
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </ScrollArea>
@@ -438,7 +542,8 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <CardTitle className="text-lg">
-                      {selectedOrder.number} - {selectedOrder.table}
+                      {selectedOrder.pdvCodPedido} - Mesa{" "}
+                      {selectedOrder.mesa.numero}
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Criado em {formatDate(selectedOrder.createdAt)}
@@ -447,10 +552,10 @@ export default function OrdersPage() {
                 </div>
                 <div
                   className={`px-3 py-1 text-xs font-medium rounded-full text-white ${getStatusColor(
-                    selectedOrder.status
+                    selectedOrder.status as Order["status"]
                   )}`}
                 >
-                  {getStatusText(selectedOrder.status)}
+                  {getStatusText(selectedOrder.status as Order["status"])}
                 </div>
               </div>
             </CardHeader>
@@ -468,46 +573,46 @@ export default function OrdersPage() {
                   <span className="whitespace-nowrap">Reimprimir</span>
                 </Button>
 
-                {selectedOrder.status === "pending" && (
+                {selectedOrder.status === "ABERTO" && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200 flex-1 md:flex-none"
-                    onClick={() => handleUpdateStatus("preparing")}
+                    onClick={() => handleUpdateStatus("FINALIZADO")}
                   >
                     <RiShoppingBag3Line className="h-4 w-4" />
                     <span className="whitespace-nowrap">Iniciar Preparo</span>
                   </Button>
                 )}
-                {selectedOrder.status === "preparing" && (
+                {selectedOrder.status === "FINALIZADO" && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1 bg-green-50 text-green-600 hover:bg-green-100 border-green-200 flex-1 md:flex-none"
-                    onClick={() => handleUpdateStatus("ready")}
+                    onClick={() => handleUpdateStatus("FINALIZADO")}
                   >
                     <RiCheckLine className="h-4 w-4" />
                     <span className="whitespace-nowrap">Marcar Pronto</span>
                   </Button>
                 )}
-                {selectedOrder.status === "ready" && (
+                {selectedOrder.status === "FINALIZADO" && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1 bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200 flex-1 md:flex-none"
-                    onClick={() => handleUpdateStatus("delivered")}
+                    onClick={() => handleUpdateStatus("FINALIZADO")}
                   >
                     <RiCheckDoubleLine className="h-4 w-4" />
                     <span className="whitespace-nowrap">Marcar Entregue</span>
                   </Button>
                 )}
-                {(selectedOrder.status === "pending" ||
-                  selectedOrder.status === "preparing") && (
+                {(selectedOrder.status === "ABERTO" ||
+                  selectedOrder.status === "FINALIZADO") && (
                   <Button
                     variant="destructive"
                     size="sm"
                     className="gap-1 flex-1 md:flex-none"
-                    onClick={() => handleUpdateStatus("canceled")}
+                    onClick={() => handleUpdateStatus("CANCELADO")}
                   >
                     <RiCloseLine className="h-4 w-4" />
                     <span className="whitespace-nowrap">Cancelar</span>
@@ -525,24 +630,26 @@ export default function OrdersPage() {
                       </h3>
                     </div>
                     <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
-                      {selectedOrder.items.map((item, index) => (
-                        <div key={item.id}>
+                      {selectedOrder.produtos.map((item, index) => (
+                        <div key={`${item.produto.codigo}-${index}`}>
                           <div className="flex justify-between py-2 gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">
-                                {item.quantity}x {item.name}
+                                {item.quantidade}x {item.produto.nome}
                               </div>
-                              {item.notes && (
+                              {item.produto.descricao && (
                                 <div className="text-sm text-muted-foreground truncate">
-                                  Obs: {item.notes}
+                                  Obs: {item.produto.descricao}
                                 </div>
                               )}
                             </div>
                             <div className="font-medium min-w-[90px] text-right">
-                              {formatCurrency(item.price * item.quantity)}
+                              {formatCurrency(
+                                item.produto.preco * item.quantidade
+                              )}
                             </div>
                           </div>
-                          {index < selectedOrder.items.length - 1 && (
+                          {index < selectedOrder.produtos.length - 1 && (
                             <Separator className="opacity-30" />
                           )}
                         </div>
@@ -557,7 +664,13 @@ export default function OrdersPage() {
                 <div className="flex justify-between items-center">
                   <div className="font-bold">Total</div>
                   <div className="font-bold text-xl">
-                    {formatCurrency(selectedOrder.total)}
+                    {formatCurrency(
+                      selectedOrder.produtos.reduce(
+                        (total, item) =>
+                          total + item.produto.preco * item.quantidade,
+                        0
+                      )
+                    )}
                   </div>
                 </div>
               </div>

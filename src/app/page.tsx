@@ -3,6 +3,7 @@
 import Logo from "@/assets/logo/logo.svg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@/lib/auth";
@@ -17,6 +18,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
 // Esquema de validação com Zod
@@ -33,7 +35,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [saveCredentials, setSaveCredentials] = useState(false);
 
   const {
     register,
@@ -84,19 +86,37 @@ export default function LoginPage() {
     }
   }, [cnpjValue, setValue]);
 
+  // Carregar credenciais salvas do localStorage
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem("savedCredentials");
+    if (savedCredentials) {
+      const { username, password, cnpj } = JSON.parse(savedCredentials);
+      setValue("username", username);
+      setValue("password", password);
+      setValue("cnpj", cnpj);
+      setSaveCredentials(true);
+    }
+  }, [setValue]);
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    setLoginError(null);
 
     try {
-      // data.cnpj já contém apenas os dígitos numéricos graças ao useEffect acima
+      // Salvar credenciais se o checkbox estiver marcado
+      if (saveCredentials) {
+        localStorage.setItem("savedCredentials", JSON.stringify(data));
+      } else {
+        localStorage.removeItem("savedCredentials");
+      }
+
       const response = await authService.login(data);
+      toast.success("Login realizado com sucesso!");
       router.push("/dashboard");
     } catch (error: any) {
       if (error.response) {
-        setLoginError(error.response.data?.message || "Credenciais inválidas");
+        toast.error(error.response.data?.message || "Credenciais inválidas");
       } else {
-        setLoginError("Erro ao conectar ao servidor. Tente novamente.");
+        toast.error("Erro ao conectar ao servidor. Tente novamente.");
       }
       console.error("Erro de login:", error);
     } finally {
@@ -184,11 +204,21 @@ export default function LoginPage() {
               )}
             </div>
 
-            {loginError && (
-              <div className="p-4 text-sm text-white bg-destructive/90 rounded-md shadow-md">
-                {loginError}
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="saveCredentials"
+                checked={saveCredentials}
+                onCheckedChange={(checked) =>
+                  setSaveCredentials(checked as boolean)
+                }
+              />
+              <label
+                htmlFor="saveCredentials"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Salvar credenciais
+              </label>
+            </div>
 
             <Button
               type="submit"

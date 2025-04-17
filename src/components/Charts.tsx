@@ -15,7 +15,7 @@ export default function Chart({ data }: ChartProps) {
       <BarChart data={data}>
         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
         <YAxis stroke="#888888" fontSize={12} />
-        <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill="oklch(0.6 0.2 25)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

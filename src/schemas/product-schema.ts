@@ -11,6 +11,7 @@ export const productFormSchema = z.object({
     }),
   categoriaId: z.string().min(1, "A categoria é obrigatória"),
   imagem: z.any().optional(),
+  ativo: z.boolean().default(true),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -28,4 +29,5 @@ export interface Product {
   delete: boolean;
   createAt: string;
   updateAt: any;
+  ativo: boolean;
 }
