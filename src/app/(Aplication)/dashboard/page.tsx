@@ -1,3 +1,4 @@
+"use client";
 import Chart from "@/components/Charts";
 import {
   Card,
@@ -6,44 +7,71 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import api from "@/lib/api";
 import {
+  RiDashboard2Line,
   RiGroupLine,
   RiMoneyDollarCircleLine,
   RiShoppingCartLine,
   RiStarLine,
 } from "@remixicon/react";
-import type { Metadata } from "next";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
 
-export const metadata: Metadata = {
-  title: "Bistro Admin - Dashboard",
+type SalesDataItem = {
+  name: string;
+  total: number;
+  online: number;
+  presencial: number;
 };
 
-const salesData = [
-  { name: "Seg", total: 1200, online: 400, presencial: 800 },
-  { name: "Ter", total: 1650, online: 550, presencial: 1100 },
-  { name: "Qua", total: 1400, online: 450, presencial: 950 },
-  { name: "Qui", total: 2100, online: 700, presencial: 1400 },
-  { name: "Sex", total: 2800, online: 900, presencial: 1900 },
-  { name: "Sab", total: 3200, online: 1000, presencial: 2200 },
-  { name: "Dom", total: 2100, online: 600, presencial: 1500 },
-];
-
-const topProducts = [
-  { name: "Picanha na Brasa", amount: 28, rating: 4.8 },
-  { name: "Risoto de Camarão", amount: 24, rating: 4.7 },
-  { name: "Filé à Parmegiana", amount: 21, rating: 4.6 },
-  { name: "Salmão Grelhado", amount: 19, rating: 4.9 },
-  { name: "Massa ao Molho Pesto", amount: 17, rating: 4.5 },
-];
+type TopProductItem = {
+  name: string;
+  amount: number;
+  rating: number;
+};
 
 export default function Page() {
+  const cnpj = JSON.parse(localStorage.getItem("user") || "{}").restaurantCnpj;
+
+  const dataDashboard = useQuery<
+    AxiosResponse,
+    Error,
+    {
+      sales: SalesDataItem[];
+      topProducts: TopProductItem[];
+      todayStats: {
+        revenue: number;
+        orders: number;
+        customers: number;
+        rating: number;
+      };
+    }
+  >({
+    queryKey: ["dataDashboard"],
+    queryFn: () => api.get(`/dashboard/${cnpj}`),
+    select: (data) => data.data,
+  });
+
+  const { revenue, orders, customers, rating } = dataDashboard.data
+    ?.todayStats || {
+    revenue: 0,
+    orders: 0,
+    customers: 0,
+    rating: 0,
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-2xl font-bold flex gap-2 items-center">
+          <RiDashboard2Line /> Dashboard
+        </h2>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-muted-foreground">Hoje</span>
-          <span className="text-sm font-medium">15/04/2024</span>
+          <span className="text-sm font-medium">
+            {new Date().toLocaleDateString("pt-BR")}
+          </span>
         </div>
       </div>
 
@@ -56,10 +84,12 @@ export default function Page() {
             <RiMoneyDollarCircleLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 3.580,00</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% em relação a ontem
-            </p>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(revenue)}
+            </div>
           </CardContent>
         </Card>
 
@@ -69,10 +99,7 @@ export default function Page() {
             <RiShoppingCartLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">
-              +15% em relação a ontem
-            </p>
+            <div className="text-2xl font-bold">{orders}</div>
           </CardContent>
         </Card>
 
@@ -84,10 +111,7 @@ export default function Page() {
             <RiGroupLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">125</div>
-            <p className="text-xs text-muted-foreground">
-              +5% em relação a ontem
-            </p>
+            <div className="text-2xl font-bold">{customers}</div>
           </CardContent>
         </Card>
 
@@ -99,10 +123,7 @@ export default function Page() {
             <RiStarLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.7</div>
-            <p className="text-xs text-muted-foreground">
-              +0.2 em relação a ontem
-            </p>
+            <div className="text-2xl font-bold">{rating.toFixed(1)}</div>
           </CardContent>
         </Card>
       </div>
@@ -116,7 +137,7 @@ export default function Page() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Chart data={salesData} />
+            <Chart data={dataDashboard.data?.sales || []} />
           </CardContent>
         </Card>
 
@@ -127,7 +148,7 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topProducts.map((item) => (
+              {dataDashboard.data?.topProducts.map((item) => (
                 <div
                   className="flex items-center justify-between"
                   key={item.name}

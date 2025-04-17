@@ -64,10 +64,8 @@ export default function PrintersPage() {
     toast.error("Erro ao carregar impressoras");
   }
 
-  console.log(printers);
-
   return (
-    <div className="container py-6">
+    <div className="container">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <PrinterIcon className="h-6 w-6" />

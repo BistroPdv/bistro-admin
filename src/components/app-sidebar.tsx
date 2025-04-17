@@ -18,11 +18,11 @@ import { authService } from "@/lib/auth";
 import {
   RiArtboard2Line,
   RiDashboard2Line,
-  RiDropboxLine,
-  RiFileList3Line,
   RiLogoutBoxLine,
+  RiPriceTag3Line,
   RiPrinterLine,
   RiSettings3Line,
+  RiShoppingBasketLine,
   RiUserFollowLine,
 } from "@remixicon/react";
 import Image from "next/image";
@@ -67,7 +67,7 @@ const data = {
           id: "p13",
           title: "Produtos",
           url: "/products",
-          icon: RiDropboxLine,
+          icon: RiPriceTag3Line,
         },
         {
           id: "p14",
@@ -85,7 +85,7 @@ const data = {
           id: "p16",
           title: "Pedidos",
           url: "/orders",
-          icon: RiFileList3Line,
+          icon: RiShoppingBasketLine,
         },
       ],
     },

@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
+import { RiArtboard2Line } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 
@@ -140,9 +141,11 @@ export default function Page() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gerenciamento de Mesas</h1>
+        <h1 className="text-2xl font-bold flex gap-2 items-center">
+          <RiArtboard2Line /> Gerenciamento de Mesas
+        </h1>
         <Button onClick={handleAddNewTable}>
           <PlusIcon className="mr-2 h-4 w-4" /> Adicionar Mesa
         </Button>

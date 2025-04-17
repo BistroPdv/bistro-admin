@@ -28,6 +28,7 @@ import {
   RiPrinterLine,
   RiSearch2Line,
   RiShoppingBag3Line,
+  RiShoppingBasketLine,
 } from "@remixicon/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -54,15 +55,6 @@ type Order = {
   createdAt: string;
 };
 
-// Tipo para os itens do pedido
-type OrderItem = {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  notes?: string;
-};
-
 interface PedidoData {
   id: string;
   status: "ABERTO" | "FINALIZADO" | "CANCELADO";
@@ -83,160 +75,6 @@ interface PedidoData {
   }[];
   createdAt: string;
 }
-
-interface PedidoResponseData {
-  data: PedidoData[];
-  meta: {
-    total: number;
-    currentPage: number;
-    lastPage: number;
-    perPage: number;
-  };
-}
-
-// Dados de exemplo para demonstração
-const mockOrders: Order[] = [
-  {
-    id: "1",
-    pdvCodPedido: "#001",
-    mesa: {
-      numero: 1,
-      id: "mesa1",
-    },
-    status: "ABERTO",
-    produtos: [
-      {
-        produto: {
-          nome: "X-Burger",
-          preco: 25.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 2,
-        status: "",
-      },
-      {
-        produto: {
-          nome: "Refrigerante",
-          preco: 6.5,
-          descricao: "Sem gelo",
-          codigo: "",
-        },
-        quantidade: 2,
-        status: "",
-      },
-    ],
-    createdAt: "2023-06-15T14:30:00",
-  },
-  {
-    id: "2",
-    pdvCodPedido: "#002",
-    mesa: {
-      numero: 3,
-      id: "mesa3",
-    },
-    status: "FINALIZADO",
-    produtos: [
-      {
-        produto: {
-          nome: "Salada Caesar",
-          preco: 28.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 1,
-        status: "",
-      },
-      {
-        produto: {
-          nome: "Água",
-          preco: 4.5,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 1,
-        status: "",
-      },
-    ],
-    createdAt: "2023-06-15T14:45:00",
-  },
-  {
-    id: "3",
-    pdvCodPedido: "#003",
-    mesa: {
-      numero: 5,
-      id: "mesa5",
-    },
-    status: "FINALIZADO",
-    produtos: [
-      {
-        produto: {
-          nome: "Pizza Margherita",
-          preco: 45.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 1,
-        status: "",
-      },
-    ],
-    createdAt: "2023-06-15T15:00:00",
-  },
-  {
-    id: "4",
-    pdvCodPedido: "#004",
-    mesa: {
-      numero: 2,
-      id: "mesa2",
-    },
-    status: "FINALIZADO",
-    produtos: [
-      {
-        produto: {
-          nome: "Espaguete à Bolonhesa",
-          preco: 32.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 2,
-        status: "",
-      },
-      {
-        produto: {
-          nome: "Vinho Tinto",
-          preco: 89.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 1,
-        status: "",
-      },
-    ],
-    createdAt: "2023-06-15T13:15:00",
-  },
-  {
-    id: "5",
-    pdvCodPedido: "#005",
-    mesa: {
-      numero: 7,
-      id: "mesa7",
-    },
-    status: "CANCELADO",
-    produtos: [
-      {
-        produto: {
-          nome: "Risoto de Camarão",
-          preco: 58.9,
-          descricao: "",
-          codigo: "",
-        },
-        quantidade: 1,
-        status: "",
-      },
-    ],
-    createdAt: "2023-06-15T12:30:00",
-  },
-];
 
 // Função para formatar o valor em reais
 const formatCurrency = (value: number) => {
@@ -368,10 +206,12 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="flex flex-col h-full flex-1 pt-6">
+    <div className="flex flex-col h-full flex-1">
       {/* Barra superior com título e botões de ação */}
       <div className="flex justify-between items-center mb-4 px-1">
-        <h1 className="text-xl font-bold">Pedidos</h1>
+        <h1 className="text-2xl font-bold flex gap-2 items-center">
+          <RiShoppingBasketLine /> Pedidos
+        </h1>
         <div className="flex gap-2">
           <Button
             variant="outline"

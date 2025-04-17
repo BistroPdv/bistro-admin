@@ -1,3 +1,4 @@
+import { RiUserFollowLine } from "@remixicon/react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -5,5 +6,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <>Usuários</>;
+  return (
+    <div className="text-2xl font-bold flex gap-2 items-center">
+      <RiUserFollowLine /> Usuários
+    </div>
+  );
 }

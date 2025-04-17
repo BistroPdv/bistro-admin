@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { Product, ProductFormValues } from "@/schemas/product-schema";
-import { RiSearchLine } from "@remixicon/react";
+import { RiPriceTag3Line, RiSearchLine } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { useState } from "react";
@@ -169,7 +169,9 @@ export default function Page() {
     <div className="flex flex-col h-full">
       <div className="flex-none space-y-6 pb-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Produtos</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <RiPriceTag3Line className="mr-2" /> Produtos
+          </h1>
           <Button onClick={handleAddNewProduct}>Adicionar Produto</Button>
         </div>
 
