@@ -531,10 +531,10 @@ export default function OrdersPage() {
           </Card>
         )}
 
-        {/* Área de detalhes do pedido - visível apenas quando um pedido está selecionado ou showOrdersList é false em mobile */}
+        {/* Área de detalhes do pedido */}
         {selectedOrder && (!showOrdersList || window.innerWidth >= 768) && (
-          <Card className="w-full md:w-2/3 lg:w-3/4 border rounded-lg overflow-hidden flex flex-col">
-            <CardHeader className="bg-muted/50 pb-3 border-b">
+          <Card className="w-full md:w-2/3 lg:w-3/4 border rounded-lg overflow-hidden flex flex-col h-full">
+            <CardHeader className="bg-muted/50 pb-3 border-b shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="bg-primary/10 p-2 rounded-md">
@@ -560,9 +560,9 @@ export default function OrdersPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0 flex-1 flex flex-col">
+            <CardContent className="p-0 flex flex-col h-full overflow-hidden">
               {/* Área de ações do pedido */}
-              <div className="p-3 border-b bg-muted/20 flex flex-wrap gap-2">
+              <div className="p-3 border-b bg-muted/20 flex flex-wrap gap-2 shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -621,46 +621,50 @@ export default function OrdersPage() {
               </div>
 
               {/* Conteúdo do pedido */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="text-lg font-semibold tracking-tight">
-                        Itens do Pedido
-                      </h3>
-                    </div>
-                    <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
-                      {selectedOrder.produtos.map((item, index) => (
-                        <div key={`${item.produto.codigo}-${index}`}>
-                          <div className="flex justify-between py-2 gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">
-                                {item.quantidade}x {item.produto.nome}
-                              </div>
-                              {item.produto.descricao && (
-                                <div className="text-sm text-muted-foreground truncate">
-                                  Obs: {item.produto.descricao}
-                                </div>
-                              )}
-                            </div>
-                            <div className="font-medium min-w-[90px] text-right">
-                              {formatCurrency(
-                                item.produto.preco * item.quantidade
-                              )}
-                            </div>
-                          </div>
-                          {index < selectedOrder.produtos.length - 1 && (
-                            <Separator className="opacity-30" />
-                          )}
+              <div className="flex-1 overflow-auto">
+                <ScrollArea className="h-full">
+                  <div className="p-4 pb-20">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <h3 className="text-lg font-semibold tracking-tight">
+                            Itens do Pedido
+                          </h3>
                         </div>
-                      ))}
+                        <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
+                          {selectedOrder.produtos.map((item, index) => (
+                            <div key={`${item.produto.codigo}-${index}`}>
+                              <div className="flex justify-between py-2 gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">
+                                    {item.quantidade}x {item.produto.nome}
+                                  </div>
+                                  {item.produto.descricao && (
+                                    <div className="text-sm text-muted-foreground truncate">
+                                      Obs: {item.produto.descricao}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="font-medium min-w-[90px] text-right">
+                                  {formatCurrency(
+                                    item.produto.preco * item.quantidade
+                                  )}
+                                </div>
+                              </div>
+                              {index < selectedOrder.produtos.length - 1 && (
+                                <Separator className="opacity-30" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </ScrollArea>
+                </ScrollArea>
+              </div>
 
               {/* Rodapé com total */}
-              <div className="p-4 border-t bg-card sticky bottom-0">
+              <div className="p-4 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 z-10 shrink-0">
                 <div className="flex justify-between items-center">
                   <div className="font-bold">Total</div>
                   <div className="font-bold text-xl">
