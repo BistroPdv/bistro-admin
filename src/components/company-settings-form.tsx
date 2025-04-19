@@ -54,6 +54,7 @@ export interface PropsSetting {
   integrationOmie: { omie_key: string; omie_secret: string } | null;
   printerNotification: string;
   printerBill: string;
+  adminPassword: string; // Added field for admin password
 }
 
 interface Banner {
@@ -76,6 +77,9 @@ const formSchema = z.object({
   omieSecretKey: z.string().optional(),
   printerNotification: z.string().optional(),
   printerBill: z.string().optional(),
+  adminPassword: z
+    .string()
+    .min(1, { message: "Senha Administrativa é obrigatória" }), // Added validation for admin password
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -137,6 +141,7 @@ export function CompanySettingsForm() {
       omieSecretKey: "",
       printerNotification: "",
       printerBill: "",
+      adminPassword: "", // Default value for admin password
     },
   });
 
@@ -223,6 +228,7 @@ export function CompanySettingsForm() {
         ...data,
         printerNotification: data.printerNotification || null,
         printerBill: data.printerBill || null,
+        adminPassword: data.adminPassword, // Include admin password in the submission
       });
 
       if (resp.status === 200 && banners.length > 0) {
@@ -260,6 +266,7 @@ export function CompanySettingsForm() {
         integrationOmie,
         printerNotification,
         printerBill,
+        adminPassword, // Load admin password from API
       } = configEnterprise.data.data;
 
       // Primeiro, atualizamos o tipo de integração
@@ -275,6 +282,7 @@ export function CompanySettingsForm() {
         printerBill: printerBill || "",
         omieAppKey: integrationOmie?.omie_key || "",
         omieSecretKey: integrationOmie?.omie_secret || "",
+        adminPassword: adminPassword || "", // Set admin password in form
       });
 
       if (logoPreview !== logo) setLogoPreview(logo);
@@ -436,6 +444,24 @@ export function CompanySettingsForm() {
                             placeholder="(XX) XXXXX-XXXX"
                             type="tel"
                             maxLength={15} // Max length for (XX) XXXXX-XXXX format
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="adminPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha Administrativa</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Digite a senha administrativa"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
