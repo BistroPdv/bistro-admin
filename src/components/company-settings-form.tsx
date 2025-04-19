@@ -112,7 +112,6 @@ export function CompanySettingsForm() {
         const response = await api.get(
           `/restaurantCnpj/${local.restaurantCnpj}/printers`
         );
-        console.log("Resposta das impressoras:", response.data);
         if (response.data) {
           setPrinters(response.data?.data);
         }
@@ -217,6 +216,7 @@ export function CompanySettingsForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
+      console.log("Dados do formulário:", data);
       const banners = data.banners || [];
       delete data.banners;
       const resp = await api.putForm("/settings", {
@@ -287,46 +287,40 @@ export function CompanySettingsForm() {
     }
   }, [configEnterprise.data, configEnterprise.isFetched, isLoadingPrinters]);
 
-  // Adicionar um useEffect para monitorar as mudanças nos valores do formulário
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log("Valores do formulário:", value);
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
-  // Adicionar um useEffect para monitorar as mudanças nos valores dos selects
-  useEffect(() => {
-    const printerNotification = form.watch("printerNotification");
-    const printerBill = form.watch("printerBill");
-    console.log("Valores dos selects:", { printerNotification, printerBill });
-  }, [form.watch("printerNotification"), form.watch("printerBill")]);
-
   // Renderização dos selects
   const renderPrinterSelect = (
     field: any,
     label: string,
     description: string
   ) => (
-    <FormItem>
-      <FormLabel>{label}</FormLabel>
-      <Select onValueChange={field.onChange} value={field.value}>
-        <FormControl>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione a impressora" />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          {printers?.map((printer: Printer) => (
-            <SelectItem key={printer.id} value={printer.id || ""}>
-              {printer.nome}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <FormDescription>{description}</FormDescription>
-      <FormMessage />
-    </FormItem>
+    <FormField
+      control={form.control}
+      name={field.name}
+      render={({ field: selectField }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <Select
+            onValueChange={selectField.onChange}
+            value={selectField.value}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a impressora" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {printers?.map((printer: Printer) => (
+                <SelectItem key={printer.id} value={printer.id || ""}>
+                  {printer.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FormDescription>{description}</FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 
   return (
@@ -535,7 +529,7 @@ export function CompanySettingsForm() {
                           <FormItem>
                             <FormLabel>Tipo de Integração</FormLabel>
                             <Select
-                              defaultValue={field.value}
+                              value={field.value}
                               onValueChange={(value) => {
                                 setIntegrationType(value);
                                 field.onChange(value);
@@ -630,12 +624,12 @@ export function CompanySettingsForm() {
                   <div className="w-full md:w-2/3">
                     <div className="grid grid-cols-1 gap-6">
                       {renderPrinterSelect(
-                        form.control.getFieldState("printerNotification"),
+                        { name: "printerNotification" },
                         "Impressora de Notificação para Garçom",
                         "Selecione a impressora que será usada para notificações do garçom"
                       )}
                       {renderPrinterSelect(
-                        form.control.getFieldState("printerBill"),
+                        { name: "printerBill" },
                         "Impressora de Solicitação de Conta",
                         "Selecione a impressora que será usada para solicitações de conta"
                       )}
