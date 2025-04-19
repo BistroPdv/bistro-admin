@@ -14,8 +14,6 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
-
-  breadcrumbs: ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
