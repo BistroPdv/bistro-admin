@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/api";
+import { Printer } from "@/schemas/printer-schema";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { withMask } from "use-mask-input";
@@ -51,6 +52,8 @@ export interface PropsSetting {
   Banner: Banner[];
   pdvIntegrations: string;
   integrationOmie: { omie_key: string; omie_secret: string } | null;
+  printerNotification: string;
+  printerBill: string;
 }
 
 interface Banner {
@@ -71,6 +74,8 @@ const formSchema = z.object({
   pdvIntegrations: z.string(),
   omieAppKey: z.string().optional(),
   omieSecretKey: z.string().optional(),
+  printerNotification: z.string().optional(),
+  printerBill: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -83,6 +88,8 @@ export function CompanySettingsForm() {
     { id: string; url: string; nome: string }[]
   >([]);
   const [integrationType, setIntegrationType] = useState<string>("omie");
+  const [printers, setPrinters] = useState<Printer[]>([]);
+  const [isLoadingPrinters, setIsLoadingPrinters] = useState(true);
 
   const configEnterprise = useQuery<
     AxiosResponse,
@@ -97,6 +104,28 @@ export function CompanySettingsForm() {
     select: (data) => data.data,
   });
 
+  useEffect(() => {
+    const fetchPrinters = async () => {
+      try {
+        setIsLoadingPrinters(true);
+        console.log("Iniciando carregamento de impressoras...");
+        const response = await api.get(
+          `/restaurantCnpj/${local.restaurantCnpj}/printers`
+        );
+        console.log("Resposta das impressoras:", response.data);
+        if (response.data) {
+          setPrinters(response.data?.data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar impressoras:", error);
+      } finally {
+        setIsLoadingPrinters(false);
+      }
+    };
+
+    fetchPrinters();
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -107,8 +136,13 @@ export function CompanySettingsForm() {
       pdvIntegrations: "",
       omieAppKey: "",
       omieSecretKey: "",
+      printerNotification: "",
+      printerBill: "",
     },
   });
+
+  // Estado para controlar se os dados iniciais já foram carregados
+  const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
 
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,10 +217,13 @@ export function CompanySettingsForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      console.log(data);
       const banners = data.banners || [];
       delete data.banners;
-      const resp = await api.putForm("/settings", data);
+      const resp = await api.putForm("/settings", {
+        ...data,
+        printerNotification: data.printerNotification || null,
+        printerBill: data.printerBill || null,
+      });
 
       if (resp.status === 200 && banners.length > 0) {
         for (let i = 0; i < banners.length; i++) {
@@ -207,7 +244,12 @@ export function CompanySettingsForm() {
   };
 
   useEffect(() => {
-    if (configEnterprise.isFetched && configEnterprise.data) {
+    if (
+      configEnterprise.isFetched &&
+      configEnterprise.data &&
+      !isLoadingPrinters &&
+      !isInitialDataLoaded
+    ) {
       const {
         name,
         email,
@@ -216,35 +258,76 @@ export function CompanySettingsForm() {
         Banner,
         pdvIntegrations,
         integrationOmie,
+        printerNotification,
+        printerBill,
       } = configEnterprise.data.data;
-      console.log(configEnterprise.data.data);
 
-      // Apenas atualiza se os valores forem diferentes
-      if (
-        form.getValues("name") !== name ||
-        form.getValues("email") !== email ||
-        form.getValues("phone") !== phone ||
-        form.getValues("pdvIntegrations") !== pdvIntegrations
-      ) {
-        form.setValue("name", name);
-        form.setValue("email", email);
-        form.setValue("phone", phone);
-        form.setValue("pdvIntegrations", pdvIntegrations);
-        setIntegrationType(pdvIntegrations);
+      // Primeiro, atualizamos o tipo de integração
+      setIntegrationType(pdvIntegrations);
 
-        if (pdvIntegrations === "OMIE") {
-          form.setValue("omieAppKey", integrationOmie?.omie_key);
-          form.setValue("omieSecretKey", integrationOmie?.omie_secret);
-        }
-      }
+      // Depois, atualizamos os valores do formulário
+      form.reset({
+        name,
+        email,
+        phone,
+        pdvIntegrations,
+        printerNotification: printerNotification || "",
+        printerBill: printerBill || "",
+        omieAppKey: integrationOmie?.omie_key || "",
+        omieSecretKey: integrationOmie?.omie_secret || "",
+      });
 
       if (logoPreview !== logo) setLogoPreview(logo);
 
       if (Banner.length > 0) {
         setBannerPreviews(Banner);
       }
+
+      setIsInitialDataLoaded(true);
     }
-  }, [configEnterprise.data, configEnterprise.isFetched]);
+  }, [configEnterprise.data, configEnterprise.isFetched, isLoadingPrinters]);
+
+  // Adicionar um useEffect para monitorar as mudanças nos valores do formulário
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      console.log("Valores do formulário:", value);
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+  // Adicionar um useEffect para monitorar as mudanças nos valores dos selects
+  useEffect(() => {
+    const printerNotification = form.watch("printerNotification");
+    const printerBill = form.watch("printerBill");
+    console.log("Valores dos selects:", { printerNotification, printerBill });
+  }, [form.watch("printerNotification"), form.watch("printerBill")]);
+
+  // Renderização dos selects
+  const renderPrinterSelect = (
+    field: any,
+    label: string,
+    description: string
+  ) => (
+    <FormItem>
+      <FormLabel>{label}</FormLabel>
+      <Select onValueChange={field.onChange} value={field.value}>
+        <FormControl>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a impressora" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+          {printers?.map((printer: Printer) => (
+            <SelectItem key={printer.id} value={printer.id || ""}>
+              {printer.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FormDescription>{description}</FormDescription>
+      <FormMessage />
+    </FormItem>
+  );
 
   return (
     <Card className="w-full max-w-4xl">
@@ -527,6 +610,34 @@ export function CompanySettingsForm() {
                             </div>
                           </CardContent>
                         </Card>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="w-full md:w-1/3">
+                    <FormLabel className="text-base font-medium">
+                      Configurações de Impressora
+                    </FormLabel>
+                    <FormDescription>
+                      Configure as impressoras para notificações e solicitações
+                      de conta.
+                    </FormDescription>
+                  </div>
+                  <div className="w-full md:w-2/3">
+                    <div className="grid grid-cols-1 gap-6">
+                      {renderPrinterSelect(
+                        form.control.getFieldState("printerNotification"),
+                        "Impressora de Notificação para Garçom",
+                        "Selecione a impressora que será usada para notificações do garçom"
+                      )}
+                      {renderPrinterSelect(
+                        form.control.getFieldState("printerBill"),
+                        "Impressora de Solicitação de Conta",
+                        "Selecione a impressora que será usada para solicitações de conta"
                       )}
                     </div>
                   </div>

@@ -220,8 +220,9 @@ export default function Page() {
       <Dialog
         open={isCategoryDialogOpen}
         onOpenChange={setIsCategoryDialogOpen}
+        modal
       >
-        <DialogContent className="sm:max-w-[95%] md:max-w-[85%] lg:max-w-[75%] xl:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <DialogContent className="overflow-hidden sm:max-w-[95%] md:max-w-[85%] lg:max-w-[75%] xl:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Categoria</DialogTitle>
             <DialogDescription>

@@ -111,8 +111,14 @@ export const authService = {
    * @returns Dados do usuário ou null se não estiver autenticado
    */
   getUser() {
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user) : null;
+    const user: {
+      id: string;
+      nome: string;
+      restaurantCnpj: string;
+      role: string;
+      username: string;
+    } = JSON.parse(localStorage.getItem("user") || "{}");
+    return user;
   },
 
   /**

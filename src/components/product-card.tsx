@@ -1,13 +1,19 @@
 "use client";
 
-import { Switch } from "@/components/ui/switch";
 import api from "@/lib/api";
 import { Product } from "@/schemas/product-schema";
-import { RiDeleteBinLine, RiEditLine, RiImageLine } from "@remixicon/react";
+import {
+  RiCheckLine,
+  RiCloseLine,
+  RiDeleteBinLine,
+  RiEditLine,
+  RiImageLine,
+} from "@remixicon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
+import { SwitchWithText } from "./ui/switch-with-text";
 
 interface ProductCardProps {
   product: Product;
@@ -78,7 +84,9 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
       <CardFooter className="p-3 pt-0 flex flex-col gap-2">
         <div className="flex items-center justify-between w-full">
           <span className="text-sm text-muted-foreground">Status:</span>
-          <Switch
+          <SwitchWithText
+            uncheckText={<RiCloseLine className="h-4 w-4" />}
+            checkText={<RiCheckLine className="h-4 w-4" />}
             checked={product.ativo}
             onCheckedChange={handleStatusChange}
           />

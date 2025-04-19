@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import { Category } from "@/@types/products";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,7 +22,6 @@ import {
 } from "@/schemas/product-schema";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
-import { Categoria } from "./products-table";
 import { FileUpload } from "./ui/file-upload";
 import {
   Select,
@@ -33,7 +33,7 @@ import {
 import { Textarea } from "./ui/textarea";
 
 interface ProductFormProps {
-  categories: Categoria[];
+  categories: Category[];
   onSubmit: (data: ProductFormValues) => void;
   product?: Product;
 }

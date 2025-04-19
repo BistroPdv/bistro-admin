@@ -22,12 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SwitchWithText } from "@/components/ui/switch-with-text";
 import api from "@/lib/api";
 import { Printer } from "@/schemas/printer-schema";
 import { ChevronDown, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { ImportOptionsModal } from "./import-options-modal";
 
 const adicionalSchema = z.object({
   id: z.string().optional(),
@@ -35,12 +37,15 @@ const adicionalSchema = z.object({
   qtdMinima: z.number().min(0, "A quantidade mínima não pode ser negativa"),
   qtdMaxima: z.number().min(1, "A quantidade máxima deve ser pelo menos 1"),
   obrigatorio: z.boolean().default(false),
+  ativo: z.boolean().default(true),
   opcoes: z.array(
     z.object({
       id: z.string().optional(),
       codIntegra: z.string().optional(),
       nome: z.string().min(1, "O nome da opção é obrigatório"),
       preco: z.string().optional(),
+      ativo: z.boolean().default(true),
+      isImported: z.boolean().optional(),
     })
   ),
 });
@@ -50,6 +55,7 @@ const categoryFormSchema = z.object({
   nome: z.string().min(1, "O nome da categoria é obrigatório"),
   cor: z.string().min(1, "A cor da categoria é obrigatória"),
   impressoraId: z.string().optional(),
+  ativo: z.boolean().default(true),
   adicionais: z.array(adicionalSchema).optional(),
 });
 
@@ -66,8 +72,25 @@ interface Adicional {
   qtdMinima: number;
   qtdMaxima: number;
   obrigatorio: boolean;
-  opcoes: { id?: string; codIntegra?: string; nome: string; preco?: string }[];
+  ativo: boolean;
+  opcoes: {
+    id?: string;
+    codIntegra?: string;
+    nome: string;
+    preco?: string;
+    ativo: boolean;
+    isImported?: boolean;
+  }[];
 }
+
+type AdicionalFields =
+  | "titulo"
+  | "qtdMinima"
+  | "qtdMaxima"
+  | "obrigatorio"
+  | "ativo"
+  | "opcoes";
+type OpcaoFields = "codIntegra" | "nome" | "preco" | "ativo";
 
 export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
   const [printers, setPrinters] = useState<Printer[]>([]);
@@ -82,11 +105,13 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
         qtdMinima: adicional.qtdMinima,
         qtdMaxima: adicional.qtdMaxima,
         obrigatorio: adicional.obrigatorio,
+        ativo: adicional.ativo,
         opcoes:
           adicional.opcoes?.map((opcao) => ({
             id: opcao.id, // Preservando o ID da opção
             ...opcao,
             preco: opcao.preco?.toString() || "",
+            ativo: opcao.ativo,
           })) || [],
       });
     });
@@ -100,10 +125,12 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
       qtdMinima: 0,
       qtdMaxima: 1,
       obrigatorio: false,
+      ativo: true,
       opcoes: (category.opcoesAdicionais || []).map((opcao) => ({
         id: opcao.id, // Preservando o ID da opção se existir
         ...opcao,
         preco: String(opcao.preco) || "",
+        ativo: true,
       })),
     });
   }
@@ -117,6 +144,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
       nome: category?.nome || "",
       cor: category?.cor || "#000000",
       impressoraId: category?.Impressora?.id || undefined,
+      ativo: category?.ativo || true,
       adicionais: adicionaisIniciais,
     },
   });
@@ -141,17 +169,17 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
   }, []);
 
   const handleAddAdicional = () => {
-    const novoAdicional = {
+    const novoAdicional: Adicional = {
       titulo: "",
       qtdMinima: 0,
       qtdMaxima: 1,
       obrigatorio: false,
+      ativo: true,
       opcoes: [],
     };
     const novosAdicionais = [...adicionais, novoAdicional];
     setAdicionais(novosAdicionais);
     form.setValue("adicionais", novosAdicionais);
-    // Expande automaticamente o novo adicional
     setExpandedAdicionais([...expandedAdicionais, novosAdicionais.length - 1]);
   };
 
@@ -169,19 +197,15 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
   };
 
   const handleAdicionalChange = (
-    index: number,
-    field: keyof Adicional,
-    value: any
+    adicionalIndex: number,
+    field: AdicionalFields,
+    value: string | number | boolean | Adicional["opcoes"]
   ) => {
     const newAdicionais = [...adicionais];
-    if (field === "opcoes") {
-      newAdicionais[index][field] = value;
-    } else if (field === "qtdMinima" || field === "qtdMaxima") {
-      newAdicionais[index][field] = Number(value);
-    } else {
-      //@ts-ignore
-      newAdicionais[index][field] = value;
-    }
+    newAdicionais[adicionalIndex] = {
+      ...newAdicionais[adicionalIndex],
+      [field]: value,
+    };
     setAdicionais(newAdicionais);
     form.setValue("adicionais", newAdicionais);
   };
@@ -189,10 +213,9 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
   const handleAddOpcao = (adicionalIndex: number) => {
     const newAdicionais = [...adicionais];
     newAdicionais[adicionalIndex].opcoes.push({
-      id: undefined, // Adicionando campo id para novas opções
       nome: "",
       preco: "",
-      codIntegra: "",
+      ativo: true,
     });
     setAdicionais(newAdicionais);
     form.setValue("adicionais", newAdicionais);
@@ -208,26 +231,46 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
   const handleOpcaoChange = (
     adicionalIndex: number,
     opcaoIndex: number,
-    field: "codIntegra" | "nome" | "preco" | "id",
-    value: string
+    field: OpcaoFields,
+    value: string | boolean
   ) => {
     const newAdicionais = [...adicionais];
-    newAdicionais[adicionalIndex].opcoes[opcaoIndex][field] = value;
+    const opcao = newAdicionais[adicionalIndex].opcoes[opcaoIndex];
+    newAdicionais[adicionalIndex].opcoes[opcaoIndex] = {
+      ...opcao,
+      [field]: value,
+    };
     setAdicionais(newAdicionais);
     form.setValue("adicionais", newAdicionais);
   };
 
   const handleSubmit = async (data: CategoryFormValues) => {
     try {
+      // console.log(data);
       // Incluir o ID da categoria se estiver editando
       if (category?.id) {
         data.id = category.id;
       }
 
+      // Garantir que o campo ativo seja enviado
+      data.ativo = data.ativo ?? true;
+
       // Remover o campo impressoraId se estiver vazio ou "none"
       if (!data.impressoraId || data.impressoraId === "none") {
         const { impressoraId, ...dataWithoutPrinter } = data;
         data = dataWithoutPrinter as CategoryFormValues;
+      }
+
+      // Garantir que os campos ativo dos adicionais estejam presentes
+      if (data.adicionais) {
+        data.adicionais = data.adicionais.map((adicional) => ({
+          ...adicional,
+          ativo: adicional.ativo ?? true,
+          opcoes: adicional.opcoes.map((opcao) => ({
+            ...opcao,
+            ativo: opcao.ativo ?? true,
+          })),
+        }));
       }
 
       if (!data.id) {
@@ -237,6 +280,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
           onRefresh?.();
         }
       } else {
+        console.log(data);
         const resp = await api.put(`/categorias/${data.id}`, { ...data });
         if (resp.status === 200) {
           toast.success("Categoria atualizada com sucesso!");
@@ -265,7 +309,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
             />
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-row gap-4">
             <FormField
               control={form.control}
               name="nome"
@@ -309,6 +353,32 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                   <FormDescription>
                     Selecione a impressora para esta categoria
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ativo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ativo?</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === "sim")}
+                    value={field.value ? "sim" : "nao"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="sim">Sim</SelectItem>
+                      <SelectItem value="nao">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Categoria está ativa?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -474,21 +544,66 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                             <FormDescription>É obrigatório?</FormDescription>
                           </FormItem>
                         </div>
+                        <div>
+                          <FormItem>
+                            <FormLabel>Ativo?</FormLabel>
+                            <Select
+                              value={adicional.ativo ? "sim" : "nao"}
+                              onValueChange={(value) =>
+                                handleAdicionalChange(
+                                  adicionalIndex,
+                                  "ativo",
+                                  value === "sim"
+                                )
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="sim">Sim</SelectItem>
+                                <SelectItem value="nao">Não</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <FormLabel>Opções do Adicional</FormLabel>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => handleAddOpcao(adicionalIndex)}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Adicionar Opção
-                          </Button>
+                          <div className="flex gap-2">
+                            <ImportOptionsModal
+                              onImport={(selectedOptions) => {
+                                const newOpcoes = [...adicional.opcoes];
+                                newOpcoes.push({
+                                  id: undefined,
+                                  codIntegra:
+                                    selectedOptions.codigo_produto.toString(),
+                                  nome: selectedOptions.descricao,
+                                  preco: selectedOptions.valor_unitario,
+                                  ativo: true,
+                                });
+                                handleAdicionalChange(
+                                  adicionalIndex,
+                                  "opcoes",
+                                  newOpcoes
+                                );
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleAddOpcao(adicionalIndex)}
+                            >
+                              <Plus className="h-4 w-4" />
+                              Adicionar Opção
+                            </Button>
+                          </div>
                         </div>
 
                         {adicional.opcoes.length === 0 && (
@@ -505,7 +620,20 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                               key={opcaoIndex}
                               className="flex flex-col sm:flex-row items-start sm:items-center gap-2"
                             >
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+                              <div className="flex flex-row gap-2 items-center w-full">
+                                <SwitchWithText
+                                  checked={opcao.ativo}
+                                  onCheckedChange={(checked) =>
+                                    handleOpcaoChange(
+                                      adicionalIndex,
+                                      opcaoIndex,
+                                      "ativo",
+                                      checked
+                                    )
+                                  }
+                                  uncheckText="Não"
+                                  checkText="Sim"
+                                />
                                 <Input
                                   value={opcao.codIntegra}
                                   onChange={(e) =>
@@ -517,7 +645,8 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                                     )
                                   }
                                   placeholder="Codigo"
-                                  className="w-full"
+                                  className="w-32 text-sm"
+                                  disabled={opcao.isImported}
                                 />
                                 <Input
                                   value={opcao.nome}
@@ -530,44 +659,44 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                                     )
                                   }
                                   placeholder="Ex: Bem passada"
-                                  className="w-full sm:col-span-2"
+                                  className="w-full text-sm sm:col-span-2"
                                 />
-                              </div>
-                              <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                <div className="relative flex-1 sm:w-32">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                    R$
-                                  </span>
-                                  <Input
-                                    value={String(opcao.preco)}
-                                    onChange={(e) =>
-                                      handleOpcaoChange(
+                                <div className="flex items-center gap-1">
+                                  <div className="relative flex-1">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                      R$
+                                    </span>
+                                    <Input
+                                      value={String(opcao.preco)}
+                                      onChange={(e) =>
+                                        handleOpcaoChange(
+                                          adicionalIndex,
+                                          opcaoIndex,
+                                          "preco",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="0,00"
+                                      className="pl-6 text-sm"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 border-red-200 hover:bg-red-100 hover:text-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemoveOpcao(
                                         adicionalIndex,
-                                        opcaoIndex,
-                                        "preco",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="0,00"
-                                    className="pl-10"
-                                  />
+                                        opcaoIndex
+                                      );
+                                    }}
+                                    title="Excluir opção"
+                                  >
+                                    <Trash2 className="h-3 w-3 text-red-500" />
+                                  </Button>
                                 </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  className="border-red-200 hover:bg-red-100 hover:text-red-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveOpcao(
-                                      adicionalIndex,
-                                      opcaoIndex
-                                    );
-                                  }}
-                                  title="Excluir opção"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
                               </div>
                             </div>
                           ))}
