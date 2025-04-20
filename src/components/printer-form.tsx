@@ -29,9 +29,10 @@ export function PrinterForm({ onSubmit, printer }: PrinterFormProps) {
   const form = useForm<PrinterFormValues>({
     resolver: zodResolver(printerFormSchema),
     defaultValues: {
+      id: printer?.id || "",
       nome: printer?.nome || "",
       ip: printer?.ip || "",
-      porta: printer?.porta || "9100",
+      porta: String(printer?.porta) || "9100",
     },
   });
 

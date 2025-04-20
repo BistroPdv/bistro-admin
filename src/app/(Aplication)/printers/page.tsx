@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
 import { Printer, PrinterFormValues } from "@/schemas/printer-schema";
 import { useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { PlusCircle, PrinterIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,23 +34,39 @@ export default function PrintersPage() {
   const handleAddPrinter = async (data: PrinterFormValues) => {
     try {
       const newPrinter: Printer = {
+        id: data.id,
         nome: data.nome,
         ip: data.ip,
-        porta: data.porta,
+        porta: Number(data.porta),
         restaurantCnpj: cnpj.restaurantCnpj,
       };
-      const response = await api.post(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/printers`,
-        { ...newPrinter, porta: Number(data.porta) }
-      );
-      if (response.status === 201) {
-        toast.success("Impressora criada com sucesso");
-        refetch();
+      if (data.id) {
+        const resp = await api.put(
+          `/restaurantCnpj/${cnpj.restaurantCnpj}/printers/${data.id}`,
+          newPrinter
+        );
+        if (resp.status === 200) {
+          toast.success("Impressora atualizada com sucesso");
+          refetch();
+        }
+      } else {
+        const resp = await api.post(
+          `/restaurantCnpj/${cnpj.restaurantCnpj}/printers`,
+          newPrinter
+        );
+        if (resp.status === 201) {
+          toast.success("Impressora criada com sucesso");
+          refetch();
+        }
       }
       setShowForm(false);
       setEditingPrinter(undefined);
     } catch (error) {
-      toast.error("Erro ao criar impressora");
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      } else {
+        toast.error("Erro ao criar impressora");
+      }
     }
   };
 

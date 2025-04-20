@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 export const printerFormSchema = z.object({
+  id: z.string().optional(),
   nome: z.string().min(1, "O nome da impressora é obrigatório"),
   ip: z
     .string()
@@ -24,7 +25,7 @@ export interface Printer {
   id?: string;
   nome: string;
   ip: string;
-  porta: string;
+  porta: number;
   restaurantCnpj: string;
   createAt?: string;
   updateAt?: any;
