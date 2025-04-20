@@ -2,8 +2,10 @@
 
 import { Printer } from "@/schemas/printer-schema";
 import { Edit2Icon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { StatusModal } from "./ui/status-modal";
 import {
   Table,
   TableBody,
@@ -22,6 +24,8 @@ interface PrintersTableProps {
 
 export default function PrintersTable(props: PrintersTableProps) {
   const { loading, printers, onEditPrinter, onDeletePrinter } = props;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [printerToDelete, setPrinterToDelete] = useState<Printer | null>(null);
 
   if (loading) {
     return (
@@ -72,9 +76,10 @@ export default function PrintersTable(props: PrintersTableProps) {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() =>
-                        onDeletePrinter && onDeletePrinter(printer.id)
-                      }
+                      onClick={() => {
+                        setPrinterToDelete(printer);
+                        setIsModalOpen(true);
+                      }}
                     >
                       <Trash2Icon className="h-4 w-4" />
                     </Button>
@@ -85,6 +90,17 @@ export default function PrintersTable(props: PrintersTableProps) {
           </TableBody>
         </Table>
       </CardContent>
+      <StatusModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Excluir Impressora"
+        content={`Tem certeza que deseja excluir a impressora ${printerToDelete?.nome}?`}
+        status="confirm"
+        onConfirm={() => {
+          onDeletePrinter && onDeletePrinter(printerToDelete?.id);
+          setIsModalOpen(false);
+        }}
+      />
     </Card>
   );
 }

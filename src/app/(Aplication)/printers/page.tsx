@@ -75,7 +75,23 @@ export default function PrintersPage() {
     setShowForm(true);
   };
 
-  const handleDeletePrinter = (printerId?: string) => {};
+  const handleDeletePrinter = async (printerId?: string) => {
+    try {
+      const resp = await api.delete(
+        `/restaurantCnpj/${cnpj.restaurantCnpj}/printers/${printerId}`
+      );
+      if (resp.status === 200) {
+        toast.success("Impressora excluída com sucesso");
+        refetch();
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      } else {
+        toast.error("Erro ao excluir impressora");
+      }
+    }
+  };
 
   if (error) {
     toast.error("Erro ao carregar impressoras");

@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RiAddLine, RiCloseLine, RiUpload2Line } from "@remixicon/react";
 import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -332,27 +333,104 @@ export function CompanySettingsForm() {
   );
 
   return (
-    <Card className="w-full max-w-4xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">Configurações da Empresa</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {configEnterprise.isLoading ? (
-          <SettingsFormSkeleton />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="w-full md:w-1/3">
-                  <FormLabel className="text-base font-medium">
-                    Logo da Empresa
-                  </FormLabel>
-                  <FormDescription>
-                    Faça upload do logo da sua empresa. Recomendamos uma imagem
-                    quadrada de pelo menos 200x200 pixels.
-                  </FormDescription>
+    <div className="space-y-8">
+      <Card className="w-full max-w-4xl">
+        <CardHeader>
+          <CardTitle className="text-2xl">Configurações da Empresa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {configEnterprise.isLoading ? (
+            <SettingsFormSkeleton />
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                {/* Seção de Informações Básicas */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold">Informações Básicas</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome da Empresa</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Digite o nome da empresa"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="contato@empresa.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              ref={withMask("(99) 99999-9999", {
+                                showMaskOnHover: false,
+                              })}
+                              placeholder="(XX) XXXXX-XXXX"
+                              type="tel"
+                              maxLength={15}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="adminPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha Administrativa</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="Digite a senha administrativa"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-                <div className="w-full md:w-2/3 flex flex-col items-center md:items-start gap-4">
+
+                {/* Seção de Logo */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold">Logo da Empresa</h3>
                   <div className="flex flex-col items-center gap-4">
                     <Label
                       htmlFor="logo-upload"
@@ -390,289 +468,202 @@ export function CompanySettingsForm() {
                     </FormDescription>
                   </div>
                 </div>
-              </div>
 
-              <div className="border-t pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome da Empresa</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Digite o nome da empresa"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>E-mail</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="contato@empresa.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            ref={withMask("(99) 99999-9999", {
-                              showMaskOnHover: false,
-                            })}
-                            placeholder="(XX) XXXXX-XXXX"
-                            type="tel"
-                            maxLength={15} // Max length for (XX) XXXXX-XXXX format
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="adminPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha Administrativa</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Digite a senha administrativa"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                  <div className="w-full md:w-1/3">
-                    <FormLabel className="text-base font-medium">
-                      Banner
-                    </FormLabel>
-                    <FormDescription>
-                      Faça upload de até 5 imagens para o banner da sua empresa.
-                      Estas imagens serão usadas em um carrossel do tablet.
-                    </FormDescription>
-                  </div>
-                  <div className="w-full md:w-2/3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {bannerPreviews.map((preview, index) => (
-                        <div
-                          key={index}
-                          className="relative aspect-video rounded-md overflow-hidden border bg-muted"
+                {/* Seção de Banners */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold">Banners</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {bannerPreviews.map((preview, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-video rounded-md overflow-hidden border bg-muted"
+                      >
+                        <Image
+                          src={preview.url}
+                          alt={`Banner ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 size-6 rounded-full"
+                          onClick={() => removeBanner(index, preview.id)}
                         >
-                          <Image
-                            src={preview.url}
-                            alt={`Banner ${index + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 size-6 rounded-full"
-                            onClick={() => removeBanner(index, preview.id)}
+                          <RiCloseLine size={16} />
+                        </Button>
+                      </div>
+                    ))}
+
+                    {bannerPreviews.length < 5 && (
+                      <Label
+                        htmlFor="banner-upload"
+                        className="cursor-pointer flex flex-col items-center justify-center aspect-video rounded-md border border-dashed bg-muted/50 hover:bg-muted transition-colors"
+                      >
+                        <RiAddLine
+                          size={24}
+                          className="mb-2 text-muted-foreground"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          Adicionar imagem
+                        </span>
+                        <Input
+                          id="banner-upload"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleBannerUpload}
+                        />
+                      </Label>
+                    )}
+                  </div>
+                  <FormMessage className="mt-2" />
+                </div>
+
+                {/* Seção de Integração PDV */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold">Integração PDV</h3>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="pdvIntegrations"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Integração</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={(value) => {
+                              setIntegrationType(value);
+                              field.onChange(value);
+                            }}
                           >
-                            <RiCloseLine size={16} />
-                          </Button>
-                        </div>
-                      ))}
-
-                      {bannerPreviews.length < 5 && (
-                        <Label
-                          htmlFor="banner-upload"
-                          className="cursor-pointer flex flex-col items-center justify-center aspect-video rounded-md border border-dashed bg-muted/50 hover:bg-muted transition-colors"
-                        >
-                          <RiAddLine
-                            size={24}
-                            className="mb-2 text-muted-foreground"
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            Adicionar imagem
-                          </span>
-                          <Input
-                            id="banner-upload"
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={handleBannerUpload}
-                          />
-                        </Label>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione o tipo de integração" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OMIE">OMIE</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Selecione o sistema que deseja integrar com sua
+                            aplicação
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
-                    <FormMessage className="mt-2" />
-                  </div>
-                </div>
-              </div>
+                    />
 
-              <div className="border-t pt-6">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                  <div className="w-full md:w-1/3">
-                    <FormLabel className="text-base font-medium">
-                      Integração PDV
-                    </FormLabel>
-                    <FormDescription>
-                      Configure as integrações com sistemas externos para o seu
-                      negócio.
-                    </FormDescription>
-                  </div>
-                  <div className="w-full md:w-2/3">
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="pdvIntegrations"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Integração</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(value) => {
-                                setIntegrationType(value);
-                                field.onChange(value);
-                              }}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecione o tipo de integração" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="OMIE">OMIE</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              Selecione o sistema que deseja integrar com sua
-                              aplicação
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {integrationType == "OMIE" && (
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">
-                              <img src="https://www.omie.com.br/assets/images/logo-omie.png" />
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-1 gap-6">
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  Integre sua conta OMIE para sincronização de
-                                  dados financeiros e estoque
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField
-                                    control={form.control}
-                                    name="omieAppKey"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>App Key</FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            placeholder="Digite a App Key da OMIE"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField
-                                    control={form.control}
-                                    name="omieSecretKey"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Secret Key</FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            type="password"
-                                            placeholder="Digite a Secret Key da OMIE"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
+                    {integrationType == "OMIE" && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">
+                            <img src="https://www.omie.com.br/assets/images/logo-omie.png" />
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 gap-6">
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Integre sua conta OMIE para sincronização de
+                                dados financeiros e estoque
+                              </p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name="omieAppKey"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>App Key</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="Digite a App Key da OMIE"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="omieSecretKey"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Secret Key</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="password"
+                                          placeholder="Digite a Secret Key da OMIE"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <div className="border-t pt-6">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                  <div className="w-full md:w-1/3">
-                    <FormLabel className="text-base font-medium">
-                      Configurações de Impressora
-                    </FormLabel>
-                    <FormDescription>
-                      Configure as impressoras para notificações e solicitações
-                      de conta.
-                    </FormDescription>
-                  </div>
-                  <div className="w-full md:w-2/3">
-                    <div className="grid grid-cols-1 gap-6">
-                      {renderPrinterSelect(
-                        { name: "printerNotification" },
-                        "Impressora de Notificação para Garçom",
-                        "Selecione a impressora que será usada para notificações do garçom"
-                      )}
-                      {renderPrinterSelect(
-                        { name: "printerBill" },
-                        "Impressora de Solicitação de Conta",
-                        "Selecione a impressora que será usada para solicitações de conta"
-                      )}
-                    </div>
+                {/* Seção de Impressoras */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold">
+                    Configurações de Impressora
+                  </h3>
+                  <div className="grid grid-cols-1 gap-6">
+                    {renderPrinterSelect(
+                      { name: "printerNotification" },
+                      "Impressora de Notificação para Garçom",
+                      "Selecione a impressora que será usada para notificações do garçom"
+                    )}
+                    {renderPrinterSelect(
+                      { name: "printerBill" },
+                      "Impressora de Solicitação de Conta",
+                      "Selecione a impressora que será usada para solicitações de conta"
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <CardFooter className="px-0 flex justify-end">
-                <Button type="submit" size="lg">
-                  Salvar Alterações
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
-        )}
-      </CardContent>
-    </Card>
+                <CardFooter className="px-0 flex justify-end">
+                  <Button type="submit" size="lg">
+                    Salvar Alterações
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Seção do QR Code para Download do App */}
+      <Card className="w-full max-w-4xl">
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            Download do App Bistro Menu
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-white rounded-lg">
+              <QRCodeSVG
+                value="http://s3.bistro.app.br/filesapibistro/bistro-menu.apk"
+                size={200}
+                level="H"
+              />
+            </div>
+            <p className="text-center text-muted-foreground">
+              Escaneie o QR Code para baixar o app Bistro Menu
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
