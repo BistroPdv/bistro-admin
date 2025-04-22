@@ -10,6 +10,7 @@ export interface Category {
   delete: boolean;
   createAt: string;
   updateAt: any;
+  ativo: boolean;
   produtos: Product[];
   Impressora: PrintTypes | null;
   ativo: boolean;
