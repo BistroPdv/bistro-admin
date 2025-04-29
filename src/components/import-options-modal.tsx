@@ -37,13 +37,13 @@ export function ImportOptionsModal({ onImport }: ImportOptionsModalProps) {
         api.get("/integrations/omie/list-produtos", {
           params: {
             page: pageParam,
-            limit: 500,
+            limit: 1000,
           },
         }),
       select: (data) => data.pages[data.pages.length - 1].data,
       getNextPageParam: (lastPage) => {
         const currentPage = lastPage.data.page || 1;
-        const totalPages = Math.ceil(lastPage.data.total / 500);
+        const totalPages = Math.ceil(lastPage.data.total / 1000);
 
         if (currentPage < totalPages) {
           return currentPage + 1;
