@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { TablePagination, TableType } from "@/@types/mesas";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,26 +37,28 @@ import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { RiArtboard2Line } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
+import { toast } from "sonner";
 
 // Definindo o esquema de validação com zod
 const tableFormSchema = z
   .object({
-    number: z.string().min(1, "O número da mesa é obrigatório"),
+    id: z.string().optional(),
+    numero: z.string().min(1, "O número da mesa é obrigatório"),
     endNumber: z.string().optional(),
     capacity: z
       .string()
-      .min(1, "A capacidade é obrigatória")
       .refine((val) => !isNaN(Number(val)), {
         message: "A capacidade deve ser um número",
-      }),
-    location: z.string().min(1, "A localização é obrigatória"),
+      })
+      .optional(),
+    location: z.string().optional(),
   })
   .refine(
     (data) => {
       // Se endNumber estiver preenchido, validar que é um número e maior que number
       if (data.endNumber && data.endNumber.trim() !== "") {
-        const start = Number(data.number);
+        const start = Number(data.numero);
         const end = Number(data.endNumber);
         return !isNaN(start) && !isNaN(end) && end >= start;
       }
@@ -69,60 +72,81 @@ const tableFormSchema = z
 
 type TableFormValues = z.infer<typeof tableFormSchema>;
 
-type Table = {
-  id: string;
-  numero: number;
-  delete: boolean;
-  capacity: number;
-  location: string;
-  createdAt: string;
-  restaurantCnpj: string;
-  updatedAt: string;
-};
-
 export default function Page() {
-  const local = localStorage.getItem("user");
-  const cnpj = JSON.parse(local || "");
-  const tables = useQuery<AxiosResponse<Table[]>>({
+  const tables = useQuery<
+    AxiosResponse<TablePagination>,
+    Error,
+    TablePagination
+  >({
     queryKey: ["tables"],
-    queryFn: async () => {
-      const response = await api.get(`/restaurantCnpj/${cnpj}/mesa`);
-      return response.data;
-    },
+    queryFn: () => api.get(`/mesas`),
+    select: (resp) => resp.data,
   });
+  console.log(tables);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTable, setEditingTable] = useState<Table | null>(null);
+  const [editingTable, setEditingTable] = useState<TableType | null>(null);
 
   const form = useForm<TableFormValues>({
     resolver: zodResolver(tableFormSchema),
     defaultValues: {
-      number: "",
+      id: "",
+      numero: "",
       endNumber: "",
       capacity: "",
       location: "",
     },
   });
 
-  const onSubmit = (data: TableFormValues) => {
-    if (editingTable) {
-      // Editar mesa existente
-    } else {
-      // Verificar se é adição em lote (intervalo de mesas)
-      if (data.endNumber && data.endNumber.trim() !== "") {
-        const startNum = parseInt(data.number);
-        const endNum = parseInt(data.endNumber);
-        const newTables: Table[] = [];
+  const idMesa = form.watch("id");
+
+  const onSubmit = async (data: TableFormValues) => {
+    try {
+      if (data.id && data.id.length > 0) {
+        const resp = await api.put<TableType>(`/mesas/${data.id}`, {
+          id: data.id,
+          numero: Number(data.numero),
+          endNumber: data.endNumber ? Number(data.endNumber) : null,
+          capacity: Number(data.capacity),
+          location: data.location,
+        });
+        if (resp.status === 200) {
+          tables.refetch();
+          toast.success("Mesa atualizada com sucesso");
+        }
+      } else {
+        const resp = await api.post("/mesas", {
+          numero: Number(data.numero),
+          endNumber: data.endNumber ? Number(data.endNumber) : null,
+          capacity: Number(data.capacity),
+          location: data.location,
+        });
+        if (resp.status === 201) {
+          tables.refetch();
+          toast.success("Mesa adicionada com sucesso");
+        }
+      }
+
+      // Resetar formulário e fechar diálogo
+      form.reset();
+      setIsDialogOpen(false);
+      setEditingTable(null);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
       }
     }
-
-    // Resetar formulário e fechar diálogo
-    form.reset();
-    setIsDialogOpen(false);
-    setEditingTable(null);
   };
 
-  const handleEditTable = (table: Table) => {
+  const handleEditTable = (table: TableType) => {
     setEditingTable(table);
+
+    if (table.id && table.id.length > 0) {
+      form.setValue("id", table.id);
+    }
+    form.setValue("numero", table.numero.toString());
+    form.setValue("endNumber", table.endNumber?.toString() || "");
+    form.setValue("capacity", table.capacity?.toString() || "");
+    form.setValue("location", table.location || "");
 
     setIsDialogOpen(true);
   };
@@ -132,7 +156,7 @@ export default function Page() {
   const handleAddNewTable = () => {
     setEditingTable(null);
     form.reset({
-      number: "",
+      numero: "",
       endNumber: "",
       capacity: "",
       location: "",
@@ -152,7 +176,7 @@ export default function Page() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tables?.data?.data.map((table) => (
+        {tables?.data?.data?.map((table) => (
           <Card key={table.id}>
             <CardHeader>
               <CardTitle>Mesa {table.numero}</CardTitle>
@@ -201,7 +225,7 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="number"
+                  name="numero"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Número Inicial</FormLabel>
@@ -220,7 +244,9 @@ export default function Page() {
                   control={form.control}
                   name="endNumber"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem
+                      hidden={typeof idMesa === "string" && idMesa.length > 0}
+                    >
                       <FormLabel>Número Final (opcional)</FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: 10" {...field} />

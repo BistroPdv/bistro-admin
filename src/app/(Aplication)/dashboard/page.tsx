@@ -1,4 +1,5 @@
 "use client";
+import { DashboardTypes } from "@/@types/dashboard";
 import Chart from "@/components/Charts";
 import {
   Card,
@@ -18,48 +19,22 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 
-type SalesDataItem = {
-  name: string;
-  total: number;
-  online: number;
-  presencial: number;
-};
-
-type TopProductItem = {
-  name: string;
-  amount: number;
-  rating: number;
-};
-
 export default function Page() {
   const cnpj = JSON.parse(localStorage.getItem("user") || "{}").restaurantCnpj;
 
-  const dataDashboard = useQuery<
-    AxiosResponse,
-    Error,
-    {
-      sales: SalesDataItem[];
-      topProducts: TopProductItem[];
-      todayStats: {
-        revenue: number;
-        orders: number;
-        customers: number;
-        rating: number;
-      };
-    }
-  >({
+  const dataDashboard = useQuery<AxiosResponse, Error, DashboardTypes>({
     queryKey: ["dataDashboard"],
     queryFn: () => api.get(`/dashboard/${cnpj}`),
     select: (data) => data.data,
   });
 
-  const { revenue, orders, customers, rating } = dataDashboard.data
-    ?.todayStats || {
-    revenue: 0,
-    orders: 0,
-    customers: 0,
-    rating: 0,
-  };
+  const { totalSales, totalOnline, totalPresencial, length } =
+    dataDashboard.data || {
+      totalSales: 0,
+      totalOnline: 0,
+      totalPresencial: 0,
+      length: 0,
+    };
 
   return (
     <div className="space-y-6">
@@ -88,42 +63,44 @@ export default function Page() {
               {new Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
-              }).format(revenue)}
+              }).format(totalSales)}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pedidos Hoje</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pedidos Online
+            </CardTitle>
             <RiShoppingCartLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orders}</div>
+            <div className="text-2xl font-bold">{totalOnline}</div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Clientes Atendidos
+              Pedidos Presenciais
             </CardTitle>
             <RiGroupLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{customers}</div>
+            <div className="text-2xl font-bold">{totalPresencial}</div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avaliação Média
+              Total de Pedidos
             </CardTitle>
             <RiStarLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{rating.toFixed(1)}</div>
+            <div className="text-2xl font-bold">{length}</div>
           </CardContent>
         </Card>
       </div>

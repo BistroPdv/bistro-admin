@@ -41,7 +41,7 @@ const adicionalSchema = z.object({
   opcoes: z.array(
     z.object({
       id: z.string().optional(),
-      codIntegra: z.string().optional(),
+      codIntegra: z.string().nullable().optional(),
       nome: z.string().min(1, "O nome da opção é obrigatório"),
       preco: z.string().optional(),
       ativo: z.boolean().default(true),
@@ -75,7 +75,7 @@ interface Adicional {
   ativo: boolean;
   opcoes: {
     id?: string;
-    codIntegra?: string;
+    codIntegra?: string | null;
     nome: string;
     preco?: string;
     ativo: boolean;
@@ -189,11 +189,21 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
     );
   };
 
-  const handleRemoveAdicional = (index: number) => {
+  const handleRemoveAdicional = async (index: number) => {
     const newAdicionais = [...adicionais];
-    newAdicionais.splice(index, 1);
-    setAdicionais(newAdicionais);
-    form.setValue("adicionais", newAdicionais);
+    try {
+      const resp = await api.delete(
+        `/group-adicionais/${newAdicionais[index].id}`
+      );
+      if (resp.status === 200) {
+        toast.success("Adicional excluído com sucesso!");
+        newAdicionais.splice(index, 1);
+        setAdicionais(newAdicionais);
+        form.setValue("adicionais", newAdicionais);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleAdicionalChange = (
@@ -284,6 +294,13 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
         const resp = await api.put(`/categorias/${data.id}`, { ...data });
         if (resp.status === 200) {
           toast.success("Categoria atualizada com sucesso!");
+          form.setValue("id", resp.data.id);
+          form.setValue("impressoraId", resp.data.impressoraId);
+          form.setValue("adicionais", resp.data.adicionais);
+          form.setValue("nome", resp.data.nome);
+          form.setValue("cor", resp.data.cor);
+          form.setValue("ativo", resp.data.ativo);
+          form.setValue("adicionais", resp.data.adicionais);
           onRefresh?.();
         }
       }
@@ -387,6 +404,17 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
 
           <div className="flex items-center justify-between">
             <FormLabel className="text-lg">Grupo de adicionais</FormLabel>
+            {Object.entries(form.formState.errors).map(([key, value]) => {
+              if (key === "adicionais" && Array.isArray(value)) {
+                return value.map((error, index) => (
+                  <p
+                    key={index}
+                    className="text-sm text-destructive"
+                  >{`${error.titulo.message}`}</p>
+                ));
+              }
+              return null;
+            })}
             <Button
               type="button"
               variant="outline"
@@ -482,12 +510,12 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                                 className="w-32"
                                 type="number"
                                 min="0"
-                                value={String(adicional.qtdMinima)}
+                                value={adicional.qtdMinima}
                                 onChange={(e) =>
                                   handleAdicionalChange(
                                     adicionalIndex,
                                     "qtdMinima",
-                                    e.target.value
+                                    Number(e.target.value)
                                   )
                                 }
                                 placeholder="0"
@@ -504,12 +532,12 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                                 className="w-32"
                                 type="number"
                                 min="1"
-                                value={String(adicional.qtdMaxima)}
+                                value={adicional.qtdMaxima}
                                 onChange={(e) =>
                                   handleAdicionalChange(
                                     adicionalIndex,
                                     "qtdMaxima",
-                                    e.target.value
+                                    Number(e.target.value)
                                   )
                                 }
                                 placeholder="1"
@@ -635,7 +663,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                                   checkText="Sim"
                                 />
                                 <Input
-                                  value={opcao.codIntegra}
+                                  value={opcao.codIntegra || ""}
                                   onChange={(e) =>
                                     handleOpcaoChange(
                                       adicionalIndex,
