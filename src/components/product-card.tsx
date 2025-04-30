@@ -11,6 +11,7 @@ import {
   RiImageLine,
 } from "@remixicon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
@@ -30,6 +31,7 @@ export function ProductCard({
   isDraggable = false,
 }: ProductCardProps) {
   const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(true);
   const formattedPrice = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -72,11 +74,19 @@ export function ProductCard({
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {product.imagem ? (
-          <img
-            src={product.imagem}
-            alt={product.nome}
-            className="h-full w-full object-cover transition-all hover:scale-105"
-          />
+          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+              </div>
+            )}
+            <img
+              src={product.imagem}
+              alt={product.nome}
+              className="h-full w-full object-cover transition-all hover:scale-105"
+              onLoad={() => setIsLoading(false)}
+            />
+          </>
         ) : (
           <div className="h-full w-full flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
             <RiImageLine className="h-8 w-8" />
