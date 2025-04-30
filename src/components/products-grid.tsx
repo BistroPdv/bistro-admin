@@ -67,52 +67,47 @@ export function ProductsGrid({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = event;
 
-    if (!over || active.id === over.id) return;
+    if (over && active.id !== over.id && editingCategoryId) {
+      // Encontra a categoria que está sendo editada
+      const editingCategory = categories.find(
+        (category) => category.id === editingCategoryId
+      );
 
-    const activeCategory = categories.find((category) =>
-      category.produtos?.some((product) => product.id === active.id)
-    );
-    const overCategory = categories.find((category) =>
-      category.produtos?.some((product) => product.id === over.id)
-    );
+      if (editingCategory && editingCategory.produtos) {
+        const oldIndex = editingCategory.produtos.findIndex(
+          (product) => product.id === active.id
+        );
+        const newIndex = editingCategory.produtos.findIndex(
+          (product) => product.id === over.id
+        );
 
-    if (
-      !activeCategory ||
-      !overCategory ||
-      activeCategory.id !== overCategory.id
-    )
-      return;
+        const newProducts = arrayMove(
+          editingCategory.produtos,
+          oldIndex,
+          newIndex
+        );
 
-    const oldIndex = activeCategory.produtos?.findIndex(
-      (product) => product.id === active.id
-    );
-    const newIndex = activeCategory.produtos?.findIndex(
-      (product) => product.id === over.id
-    );
+        // Atualiza a ordem dos produtos
+        const updatedProducts = newProducts.map((product, index) => ({
+          ...product,
+          ordem: index + 1,
+        }));
 
-    if (oldIndex === undefined || newIndex === undefined) return;
+        // Atualiza a lista de categorias mantendo os produtos ordenados
+        const updatedCategories = categories.map((category) =>
+          category.id === editingCategoryId
+            ? { ...category, produtos: updatedProducts }
+            : category
+        );
 
-    const newProducts = arrayMove(
-      activeCategory.produtos || [],
-      oldIndex,
-      newIndex
-    );
-
-    const updatedCategories = categories.map((category) => {
-      if (category.id === activeCategory.id) {
-        return {
-          ...category,
-          produtos: newProducts,
-        };
+        setCategories(updatedCategories);
+        onReorderProducts?.(editingCategoryId, updatedProducts);
       }
-      return category;
-    });
+    }
 
-    setCategories(updatedCategories);
-    onReorderProducts?.(activeCategory.id, newProducts);
+    setActiveId(null);
   };
 
   const toggleCategoryOrder = (categoryId: string) => {
