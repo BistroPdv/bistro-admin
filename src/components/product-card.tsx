@@ -1,6 +1,7 @@
 "use client";
 
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { Product } from "@/schemas/product-schema";
 import {
   RiCheckLine,
@@ -19,9 +20,15 @@ interface ProductCardProps {
   product: Product;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
+  isDraggable?: boolean;
 }
 
-export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onEdit,
+  onDelete,
+  isDraggable = false,
+}: ProductCardProps) {
   const queryClient = useQueryClient();
   const formattedPrice = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -57,7 +64,12 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col transition-all hover:shadow-md">
+    <Card
+      className={cn(
+        "overflow-hidden h-full flex flex-col transition-all hover:shadow-md",
+        isDraggable && "border-2 border-dashed border-muted-foreground/30"
+      )}
+    >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {product.imagem ? (
           <img

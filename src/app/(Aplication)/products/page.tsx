@@ -20,6 +20,7 @@ import { RiPriceTag3Line, RiSearchLine } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Page() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -112,6 +113,35 @@ export default function Page() {
     },
   });
 
+  const reorderProductsMutation = useMutation({
+    mutationFn: async ({
+      categoryId,
+      products,
+    }: {
+      categoryId: string;
+      products: Product[];
+    }) => {
+      const updates = products.map((product, index) => ({
+        id: product.id,
+        ordem: index + 1,
+      }));
+
+      const response = await api.put(
+        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/ordem`,
+        updates
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Ordem dos produtos atualizada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao reordenar produtos:", error);
+      toast.error("Erro ao reordenar produtos");
+    },
+  });
+
   const handleAddNewProduct = () => {
     setEditingProduct(null);
     setIsDialogOpen(true);
@@ -136,6 +166,10 @@ export default function Page() {
   };
 
   const handleDeleteProduct = (product: Product) => {};
+
+  const handleReorderProducts = (categoryId: string, products: Product[]) => {
+    reorderProductsMutation.mutate({ categoryId, products });
+  };
 
   const filteredCategories =
     data?.data?.map((category) => ({
@@ -182,6 +216,7 @@ export default function Page() {
           onEditProduct={handleEditProduct}
           onDeleteProduct={handleDeleteProduct}
           onEditCategory={handleEditCategory}
+          onReorderProducts={handleReorderProducts}
         />
       </div>
 

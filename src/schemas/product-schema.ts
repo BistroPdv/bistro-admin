@@ -30,4 +30,5 @@ export interface Product {
   createAt: string;
   updateAt: any;
   ativo: boolean;
+  ordem?: number;
 }

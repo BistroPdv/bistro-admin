@@ -55,6 +55,7 @@ export interface Product {
   descricao: string;
   imagem: string;
   preco: number;
+  ordem: number;
   categoriaId: string;
   externoId: any;
   codigo: any;
