@@ -25,8 +25,10 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { RiDraggable } from "@remixicon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { SortableItem } from "./sortable-item";
 
 interface CategoryOrderModalProps {
@@ -40,8 +42,18 @@ export function CategoryOrderModal({
   onClose,
   categories,
 }: CategoryOrderModalProps) {
-  const [items, setItems] = useState<Category[]>(categories);
+  const [items, setItems] = useState<Category[]>([]);
   const queryClient = useQueryClient();
+
+  // Atualiza o estado local sempre que as categorias ou o estado do modal mudar
+  useEffect(() => {
+    if (isOpen && categories.length > 0) {
+      setItems(categories);
+    }
+  }, [categories, isOpen]);
+
+  const local = localStorage.getItem("user");
+  const cnpj = JSON.parse(local || "");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -52,15 +64,21 @@ export function CategoryOrderModal({
 
   const updateOrderMutation = useMutation({
     mutationFn: async (orderedCategories: Category[]) => {
-      const updates = orderedCategories.map((category, index) => ({
-        id: category.id,
-        ordem: index + 1,
-      }));
+      const updates = orderedCategories.map((category, index) => {
+        return {
+          id: category.id,
+          ordem: index + 1,
+        };
+      });
 
-      return api.put("/categorias/ordem", { categorias: updates });
+      return api.put(
+        `/restaurantCnpj/${cnpj.restaurantCnpj}/categorias/ordem`,
+        updates
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Categorias reordenadas com sucesso");
       onClose();
     },
   });
@@ -81,7 +99,7 @@ export function CategoryOrderModal({
   const handleSaveOrder = () => {
     updateOrderMutation.mutate(items);
   };
-  console.log(categories);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -106,7 +124,8 @@ export function CategoryOrderModal({
               <div className="space-y-2">
                 {items.map((category) => (
                   <SortableItem key={category.id} id={category.id}>
-                    <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div className="flex bg-muted items-center cursor-move select-none py-3 px-4 gap-3 border rounded-md">
+                      <RiDraggable />
                       <span>{category.nome}</span>
                     </div>
                   </SortableItem>
