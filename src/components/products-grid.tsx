@@ -42,7 +42,9 @@ export function ProductsGrid({
   onReorderProducts,
 }: ProductsGridProps) {
   const [categories, setCategories] = useState(items);
-  const [isEditingOrder, setIsEditingOrder] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -109,6 +111,10 @@ export function ProductsGrid({
     onReorderProducts?.(activeCategory.id, newProducts);
   };
 
+  const toggleCategoryOrder = (categoryId: string) => {
+    setEditingCategoryId(editingCategoryId === categoryId ? null : categoryId);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
@@ -162,13 +168,15 @@ export function ProductsGrid({
                     </span>
                   </div>
                   <Button
-                    variant={isEditingOrder ? "default" : "outline"}
+                    variant={
+                      editingCategoryId === category.id ? "default" : "outline"
+                    }
                     size="sm"
-                    onClick={() => setIsEditingOrder(!isEditingOrder)}
+                    onClick={() => toggleCategoryOrder(category.id)}
                     className="flex items-center gap-2"
                   >
                     <RiDragMove2Line className="h-4 w-4" />
-                    {isEditingOrder
+                    {editingCategoryId === category.id
                       ? "Finalizar Ordenação"
                       : "Ordenar Produtos"}
                   </Button>
@@ -188,7 +196,7 @@ export function ProductsGrid({
                           product={product}
                           onEdit={onEditProduct}
                           onDelete={onDeleteProduct}
-                          isDraggable={isEditingOrder}
+                          isDraggable={editingCategoryId === category.id}
                         />
                       ))}
                   </div>
@@ -205,7 +213,7 @@ export function ProductsGrid({
                 product={activeProduct}
                 onEdit={onEditProduct}
                 onDelete={onDeleteProduct}
-                isDraggable={isEditingOrder}
+                isDraggable={editingCategoryId === activeProduct.categoriaId}
               />
             </div>
           ) : null}
