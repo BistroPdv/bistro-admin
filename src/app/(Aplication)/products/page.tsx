@@ -1,7 +1,8 @@
 "use client";
 import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
-import { CategoryForm, CategoryFormValues } from "@/components/category-form";
+import { CategoryForm } from "@/components/category-form";
+import { CategoryOrderModal } from "@/components/category-order-modal";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { useState } from "react";
 export default function Page() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,24 +112,6 @@ export default function Page() {
     },
   });
 
-  const updateCategoryMutation = useMutation({
-    mutationFn: async (formData: CategoryFormValues & { id: string }) => {
-      // Endpoint para atualizar categoria
-      const endpoint = `/categorias/${formData.id}`;
-      return api.put(endpoint, {
-        ...formData,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      setIsCategoryDialogOpen(false);
-      setEditingCategory(null);
-    },
-    onError: (error) => {
-      console.error("Erro ao atualizar categoria:", error);
-    },
-  });
-
   const handleAddNewProduct = () => {
     setEditingProduct(null);
     setIsDialogOpen(true);
@@ -172,7 +156,12 @@ export default function Page() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <RiPriceTag3Line className="mr-2" /> Produtos
           </h1>
-          <Button onClick={handleAddNewProduct}>Adicionar Produto</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsOrderModalOpen(true)}>
+              Ordenar Categorias
+            </Button>
+            <Button onClick={handleAddNewProduct}>Adicionar Produto</Button>
+          </div>
         </div>
 
         <div className="relative">
@@ -236,6 +225,12 @@ export default function Page() {
           />
         </DialogContent>
       </Dialog>
+
+      <CategoryOrderModal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        categories={data?.data || []}
+      />
     </div>
   );
 }
