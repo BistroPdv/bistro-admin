@@ -124,6 +124,7 @@ export default function Page() {
       const updates = products.map((product, index) => ({
         id: product.id,
         ordem: index + 1,
+        categoriaId: categoryId,
       }));
 
       const response = await api.put(
