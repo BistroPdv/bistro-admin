@@ -144,7 +144,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
       nome: category?.nome || "",
       cor: category?.cor || "#000000",
       impressoraId: category?.Impressora?.id || undefined,
-      ativo: category?.ativo || true,
+      ativo: category?.ativo,
       adicionais: adicionaisIniciais,
     },
   });
@@ -290,7 +290,6 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
           onRefresh?.();
         }
       } else {
-        console.log(data);
         const resp = await api.put(`/categorias/${data.id}`, { ...data });
         if (resp.status === 200) {
           toast.success("Categoria atualizada com sucesso!");

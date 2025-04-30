@@ -62,7 +62,7 @@ export default function Page() {
       }
 
       // Endpoint para criar produto
-      const endpoint = `/produtos`;
+      const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos`;
       return api.post(endpoint, productData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -95,7 +95,7 @@ export default function Page() {
       }
 
       // Endpoint para atualizar produto
-      const endpoint = `/produtos/${formData.id}`;
+      const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${formData.id}`;
       return api.put(endpoint, productData, {
         headers: {
           "Content-Type": "multipart/form-data",
