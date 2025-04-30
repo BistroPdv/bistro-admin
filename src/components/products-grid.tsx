@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { RiDragMove2Line, RiPencilLine } from "@remixicon/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductCard } from "./product-card";
 import { SortableProductCard } from "./sortable-product-card";
 import { Button } from "./ui/button";
@@ -46,6 +46,10 @@ export function ProductsGrid({
     null
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCategories(items);
+  }, [items]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
