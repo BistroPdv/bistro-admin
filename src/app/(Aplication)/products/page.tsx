@@ -166,7 +166,9 @@ export default function Page() {
     setIsCategoryDialogOpen(true);
   };
 
-  const handleDeleteProduct = (product: Product) => {};
+  const handleDeleteProduct = (product: Product) => {
+    refetch();
+  };
 
   const handleReorderProducts = (categoryId: string, products: Product[]) => {
     reorderProductsMutation.mutate({ categoryId, products });

@@ -47,7 +47,7 @@ const statusConfig = {
   confirm: {
     icon: AlertCircle,
     iconColor: "text-yellow-500",
-    buttonVariant: "default" as const,
+    buttonVariant: "outline" as const,
   },
 };
 
@@ -77,7 +77,11 @@ export function StatusModal({
         <DialogFooter className="sm:justify-end">
           {status === "confirm" ? (
             <>
-              <Button variant="outline" onClick={onClose}>
+              <Button
+                variant="outline"
+                className="text-destructive hover:text-destructive/80"
+                onClick={onClose}
+              >
                 {cancelText}
               </Button>
               <Button variant={config.buttonVariant} onClick={onConfirm}>

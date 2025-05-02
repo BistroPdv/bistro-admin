@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
+import { StatusModal } from "./ui/status-modal";
 import { SwitchWithText } from "./ui/switch-with-text";
 
 interface ProductCardProps {
@@ -33,6 +34,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const formattedPrice = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -64,6 +66,28 @@ export function ProductCard({
 
   const handleStatusChange = (checked: boolean) => {
     updateProductStatusMutation.mutate(checked);
+  };
+
+  const handleDelete = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      setIsModalOpen(false);
+
+      console.log(product);
+
+      const resp = await api.delete(
+        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${product.id}`
+      );
+      if (resp.status === 200) {
+        onDelete && onDelete(product);
+        toast.success("Produto excluído com sucesso!");
+      }
+    } catch (error) {
+      toast.error("Erro ao excluir produto");
+    }
   };
 
   return (
@@ -153,13 +177,21 @@ export function ProductCard({
             variant="outline"
             size="sm"
             className="w-full font-medium text-destructive"
-            onClick={() => onDelete && onDelete(product)}
+            onClick={handleDelete}
           >
             <RiDeleteBinLine className="h-3.5 w-3.5 mr-1.5" />
             Excluir
           </Button>
         </div>
       </CardFooter>
+      <StatusModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Excluir produto"
+        content="Tem certeza que deseja excluir este produto?"
+        status="confirm"
+      />
     </Card>
   );
 }
