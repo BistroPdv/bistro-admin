@@ -3,6 +3,7 @@ import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import { CategoryForm } from "@/components/category-form";
 import { CategoryOrderModal } from "@/components/category-order-modal";
+import { ImportOptionsModal } from "@/components/import-options-modal";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
+import { authService } from "@/lib/auth";
 import { Product, ProductFormValues } from "@/schemas/product-schema";
 import {
   RiLayoutGridLine,
@@ -36,6 +38,8 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const queryClient = useQueryClient();
+
+  const settings = authService.getSettings();
 
   const local = localStorage.getItem("user");
   const cnpj = JSON.parse(local || "");
@@ -260,8 +264,16 @@ export default function Page() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="md:min-w-2xl max-w-4xl">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
               {editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}
+              {settings.pdvIntegrations.length > 0 && (
+                <ImportOptionsModal
+                  title="Importar Produtos"
+                  onImport={(data) => {
+                    console.log(data);
+                  }}
+                />
+              )}
             </DialogTitle>
             <DialogDescription>
               {editingProduct

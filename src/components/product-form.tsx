@@ -46,6 +46,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const user = authService.getUser();
+  const settings = authService.getSettings();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -60,10 +61,8 @@ export function ProductForm({
   });
 
   const handleSubmit = (data: ProductFormValues) => {
-    // Adiciona o arquivo de imagem aos dados do formulário
     data.imagem = imageFile;
-    // Define o updateFrom com o nome do usuário atual (garantindo que nunca seja vazio)
-    data.updateFrom = user.username || "usuário do sistema";
+    data.updateFrom = user.username;
     onSubmit(data);
   };
 
@@ -80,7 +79,7 @@ export function ProductForm({
               control={form.control}
               name="updateFrom"
               render={({ field }) => (
-                <FormItem>
+                <FormItem hidden>
                   <FormLabel>Atualizado por</FormLabel>
                   <FormControl>
                     <Input {...field} />
@@ -218,11 +217,13 @@ export function ProductForm({
             {product ? "Salvar Alterações" : "Adicionar Produto"}
           </Button>
         </div>
-        <div className="text-xs absolute text-muted-foreground">
-          * ultima alteração{" "}
-          {dayjs(product?.updateAt).format("DD/MM/YYYY HH:mm")}{" "}
-          {product?.updateFrom}
-        </div>
+        {product?.id && (
+          <div className="text-xs absolute text-muted-foreground">
+            * ultima alteração{" "}
+            {dayjs(product?.updateAt).format("DD/MM/YYYY HH:mm")}{" "}
+            {product?.updateFrom}
+          </div>
+        )}
       </form>
     </Form>
   );

@@ -1,3 +1,4 @@
+import { AxiosResponse } from "axios";
 import api from "./api";
 
 interface LoginCredentials {
@@ -16,6 +17,35 @@ interface AuthResponse {
   };
 }
 
+interface SettingsResponse {
+  cnpj: string;
+  name: string;
+  logo: string;
+  adminPassword: string;
+  pdvIntegrations: string;
+  integrationOmie: IntegrationOmie;
+  printerNotification: string;
+  printerBill: string;
+  email: string;
+  phone: string;
+  Banner: Banner[];
+  ipPrintNotification: string;
+  ipPrintBill: string;
+  portaPrintNotification: number;
+  portaPrintBill: number;
+}
+
+export interface IntegrationOmie {
+  omie_key: string;
+  omie_secret: string;
+}
+
+export interface Banner {
+  id: string;
+  url: string;
+  nome: string;
+}
+
 export const authService = {
   /**
    * Realiza o login do usuário
@@ -31,6 +61,12 @@ export const authService = {
 
       // Armazena informações básicas do usuário
       localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      if (response.status === 201) {
+        const settings: AxiosResponse<{ data: SettingsResponse }> =
+          await api.get("/settings");
+        localStorage.setItem("settings", JSON.stringify(settings.data.data));
+      }
 
       return response.data;
     } catch (error) {
@@ -121,6 +157,12 @@ export const authService = {
     return user;
   },
 
+  getSettings() {
+    const settings: SettingsResponse = JSON.parse(
+      localStorage.getItem("settings") || "{}"
+    );
+    return settings;
+  },
   /**
    * Valida o token com o servidor
    * Esta função é assíncrona e não bloqueia a execução

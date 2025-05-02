@@ -23,9 +23,13 @@ interface ImportOptionsModalProps {
     valor_unitario: string;
     isImported: boolean;
   }) => void;
+  title?: string;
 }
 
-export function ImportOptionsModal({ onImport }: ImportOptionsModalProps) {
+export function ImportOptionsModal({
+  onImport,
+  title = "Importar Opções",
+}: ImportOptionsModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -84,12 +88,12 @@ export function ImportOptionsModal({ onImport }: ImportOptionsModalProps) {
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="gap-1">
           <RiImportLine className="h-4 w-4" />
-          Importar Opções
+          {title}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Importar Opções</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="sticky top-0 z-10 bg-background py-4">
           <div className="relative">
