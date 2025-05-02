@@ -16,7 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { Product, ProductFormValues } from "@/schemas/product-schema";
-import { RiPriceTag3Line, RiSearchLine } from "@remixicon/react";
+import {
+  RiLayoutGridLine,
+  RiListCheck2,
+  RiPriceTag3Line,
+  RiSearchLine,
+} from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { useState } from "react";
@@ -29,6 +34,7 @@ export default function Page() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const queryClient = useQueryClient();
 
   const local = localStorage.getItem("user");
@@ -194,6 +200,22 @@ export default function Page() {
             <RiPriceTag3Line className="mr-2" /> Produtos
           </h1>
           <div className="flex gap-2">
+            <Button
+              title={
+                viewMode === "card"
+                  ? "Visualizar como Lista"
+                  : "Visualizar como Cards"
+              }
+              variant="outline"
+              onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
+              className="flex items-center gap-1"
+            >
+              {viewMode === "card" ? (
+                <RiListCheck2 className="h-8 w-8" />
+              ) : (
+                <RiLayoutGridLine className="h-8 w-8" />
+              )}
+            </Button>
             <Button variant="outline" onClick={() => setIsOrderModalOpen(true)}>
               Ordenar Categorias
             </Button>
@@ -220,6 +242,7 @@ export default function Page() {
           onDeleteProduct={handleDeleteProduct}
           onEditCategory={handleEditCategory}
           onReorderProducts={handleReorderProducts}
+          viewMode={viewMode}
         />
       </div>
 

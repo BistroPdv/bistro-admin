@@ -21,7 +21,9 @@ import {
 import { RiDragMove2Line, RiPencilLine } from "@remixicon/react";
 import { useEffect, useState } from "react";
 import { ProductCard } from "./product-card";
+import { ProductListItem } from "./product-list-item";
 import { SortableProductCard } from "./sortable-product-card";
+import { SortableProductListItem } from "./sortable-product-list-item";
 import { Button } from "./ui/button";
 
 interface ProductsGridProps {
@@ -31,6 +33,7 @@ interface ProductsGridProps {
   onDeleteProduct?: (product: Product) => void;
   onEditCategory?: (category: Category) => void;
   onReorderProducts?: (categoryId: string, products: Product[]) => void;
+  viewMode?: "card" | "list";
 }
 
 export function ProductsGrid({
@@ -40,6 +43,7 @@ export function ProductsGrid({
   onDeleteProduct,
   onEditCategory,
   onReorderProducts,
+  viewMode = "card",
 }: ProductsGridProps) {
   const [categories, setCategories] = useState(items);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
@@ -185,20 +189,54 @@ export function ProductsGrid({
                   items={category.produtos?.map((product) => product.id) || []}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-                    {category.produtos
-                      ?.sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-                      .map((product) => (
-                        <SortableProductCard
-                          key={product.id}
-                          id={product.id}
-                          product={product}
-                          onEdit={onEditProduct}
-                          onDelete={onDeleteProduct}
-                          isDraggable={editingCategoryId === category.id}
-                        />
-                      ))}
-                  </div>
+                  {viewMode === "card" ? (
+                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                      {category.produtos
+                        ?.sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                        .map((product) => (
+                          <SortableProductCard
+                            key={product.id}
+                            id={product.id}
+                            product={product}
+                            onEdit={onEditProduct}
+                            onDelete={onDeleteProduct}
+                            isDraggable={editingCategoryId === category.id}
+                          />
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="divide-y border rounded-md overflow-hidden bg-card shadow-sm">
+                      <div className="bg-muted/50 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Listagem de produtos
+                      </div>
+                      {category.produtos?.length === 0 && (
+                        <div className="p-4 text-center text-muted-foreground">
+                          Nenhum produto nesta categoria
+                        </div>
+                      )}
+                      {category.produtos
+                        ?.sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                        .map((product) =>
+                          editingCategoryId === category.id ? (
+                            <SortableProductListItem
+                              key={product.id}
+                              id={product.id}
+                              product={product}
+                              onEdit={onEditProduct}
+                              onDelete={onDeleteProduct}
+                              isDraggable={true}
+                            />
+                          ) : (
+                            <ProductListItem
+                              key={product.id}
+                              product={product}
+                              onEdit={onEditProduct}
+                              onDelete={onDeleteProduct}
+                            />
+                          )
+                        )}
+                    </div>
+                  )}
                 </SortableContext>
               </div>
             );
@@ -208,12 +246,20 @@ export function ProductsGrid({
         <DragOverlay>
           {activeProduct ? (
             <div className="opacity-50">
-              <ProductCard
-                product={activeProduct}
-                onEdit={onEditProduct}
-                onDelete={onDeleteProduct}
-                isDraggable={editingCategoryId === activeProduct.categoriaId}
-              />
+              {viewMode === "card" ? (
+                <ProductCard
+                  product={activeProduct}
+                  onEdit={onEditProduct}
+                  onDelete={onDeleteProduct}
+                  isDraggable={editingCategoryId === activeProduct.categoriaId}
+                />
+              ) : (
+                <ProductListItem
+                  product={activeProduct}
+                  onEdit={onEditProduct}
+                  onDelete={onDeleteProduct}
+                />
+              )}
             </div>
           ) : null}
         </DragOverlay>
