@@ -56,6 +56,12 @@ export default function Page() {
 
   const createProductMutation = useMutation({
     mutationFn: async (formData: ProductFormValues & { file?: File }) => {
+      // Verificar o valor do updateFrom antes da requisição
+      console.log(
+        "updateFrom antes da requisição (create):",
+        formData.updateFrom
+      );
+
       // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
@@ -63,6 +69,7 @@ export default function Page() {
       productData.append("preco", formData.preco.replace(",", "."));
       productData.append("categoriaId", formData.categoriaId);
       productData.append("restaurantCnpj", cnpj.restaurantCnpj);
+      productData.append("updateFrom", formData.updateFrom || "");
 
       if (formData.imagem) {
         productData.append("file", formData.imagem);
@@ -89,6 +96,9 @@ export default function Page() {
     mutationFn: async (
       formData: ProductFormValues & { id: string; file?: File }
     ) => {
+      // Verificar o valor do updateFrom antes da requisição
+      console.log("updateFrom antes da requisição:", formData.updateFrom);
+
       // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
@@ -96,11 +106,12 @@ export default function Page() {
       productData.append("preco", formData.preco.replace(",", "."));
       productData.append("categoriaId", formData.categoriaId);
       productData.append("restaurantCnpj", cnpj.restaurantCnpj);
+      productData.append("updateFrom", formData.updateFrom || "");
 
       if (formData.imagem) {
         productData.append("file", formData.imagem);
       }
-
+      console.log(formData.updateFrom);
       // Endpoint para atualizar produto
       const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${formData.id}`;
       return api.put(endpoint, productData, {

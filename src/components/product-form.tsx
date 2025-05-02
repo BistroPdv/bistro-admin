@@ -1,8 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
 import { Category } from "@/@types/products";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +12,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authService } from "@/lib/auth";
 import {
   Product,
   ProductFormValues,
   productFormSchema,
 } from "@/schemas/product-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import dayjs from "dayjs";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FileUpload } from "./ui/file-upload";
 import {
   Select,
@@ -44,6 +45,7 @@ export function ProductForm({
   product,
 }: ProductFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const user = authService.getUser();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -53,20 +55,41 @@ export function ProductForm({
       preco: product?.preco ? product.preco.toString() : "",
       categoriaId: product?.categoriaId || "",
       imagem: undefined,
+      updateFrom: product?.updateFrom || "",
     },
   });
 
   const handleSubmit = (data: ProductFormValues) => {
     // Adiciona o arquivo de imagem aos dados do formulário
     data.imagem = imageFile;
+    // Define o updateFrom com o nome do usuário atual (garantindo que nunca seja vazio)
+    data.updateFrom = user.username || "usuário do sistema";
     onSubmit(data);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6 relative "
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-6">
+            {/* USUARIO QUE ESTA ALTERANDO O PRODUTO */}
+            <FormField
+              control={form.control}
+              name="updateFrom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Atualizado por</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* NOME DO PRODUTO */}
             <FormField
               control={form.control}
               name="nome"
@@ -194,6 +217,11 @@ export function ProductForm({
             <PlusCircle className="h-4 w-4" />
             {product ? "Salvar Alterações" : "Adicionar Produto"}
           </Button>
+        </div>
+        <div className="text-xs absolute text-muted-foreground">
+          * ultima alteração{" "}
+          {dayjs(product?.updateAt).format("DD/MM/YYYY HH:mm")}{" "}
+          {product?.updateFrom}
         </div>
       </form>
     </Form>
