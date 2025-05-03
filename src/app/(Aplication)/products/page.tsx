@@ -1,9 +1,13 @@
 "use client";
+import { ConsultarProdutoResponse } from "@/@types/omie";
 import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import { CategoryForm } from "@/components/category-form";
 import { CategoryOrderModal } from "@/components/category-order-modal";
-import { ImportOptionsModal } from "@/components/import-options-modal";
+import {
+  ImportEventTypes,
+  ImportOptionsModal,
+} from "@/components/import-options-modal";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
 import { Button } from "@/components/ui/button";
@@ -69,9 +73,10 @@ export default function Page() {
       // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
-      productData.append("descricao", formData.descricao);
+      productData.append("descricao", formData.descricao || "");
       productData.append("preco", formData.preco.replace(",", "."));
       productData.append("categoriaId", formData.categoriaId);
+      productData.append("externoId", formData.externoId || "");
       productData.append("restaurantCnpj", cnpj.restaurantCnpj);
       productData.append("updateFrom", formData.updateFrom || "");
 
@@ -101,28 +106,37 @@ export default function Page() {
       formData: ProductFormValues & { id: string; file?: File }
     ) => {
       // Verificar o valor do updateFrom antes da requisição
-      console.log("updateFrom antes da requisição:", formData.updateFrom);
-
+      console.log("formData", formData);
       // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
-      productData.append("descricao", formData.descricao);
+      productData.append("descricao", formData.descricao || "");
       productData.append("preco", formData.preco.replace(",", "."));
+      productData.append("externoId", formData.externoId || "");
+      productData.append("imagem", formData.imagem || "");
       productData.append("categoriaId", formData.categoriaId);
       productData.append("restaurantCnpj", cnpj.restaurantCnpj);
       productData.append("updateFrom", formData.updateFrom || "");
 
-      if (formData.imagem) {
+      if (formData.imagem && formData.imagem instanceof File) {
         productData.append("file", formData.imagem);
       }
-      console.log(formData.updateFrom);
-      // Endpoint para atualizar produto
-      const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${formData.id}`;
-      return api.put(endpoint, productData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      if (formData.id) {
+        // Endpoint para atualizar produto
+        const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${formData.id}`;
+        return api.put(endpoint, productData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } else {
+        const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos`;
+        return api.post(endpoint, productData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -176,8 +190,14 @@ export default function Page() {
 
   const handleSubmit = (data: ProductFormValues) => {
     if (editingProduct) {
-      updateProductMutation.mutate({ ...data, id: editingProduct.id });
+      console.log("update", data);
+
+      updateProductMutation.mutate({
+        ...data,
+        id: editingProduct.id || "",
+      });
     } else {
+      console.log("create", data);
       createProductMutation.mutate(data);
     }
   };
@@ -193,6 +213,21 @@ export default function Page() {
 
   const handleReorderProducts = (categoryId: string, products: Product[]) => {
     reorderProductsMutation.mutate({ categoryId, products });
+  };
+
+  const handleImportProducts = async (data: ImportEventTypes) => {
+    const resp: AxiosResponse<ConsultarProdutoResponse> = await api.get(
+      `/integrations/omie/produto/${data.codigo_produto}`
+    );
+    const dados = {
+      id: editingProduct?.id,
+      nome: resp.data.descricao,
+      descricao: resp.data.descr_detalhada,
+      preco: resp.data.valor_unitario,
+      imagem: resp.data.imagens[0].url_imagem,
+    };
+
+    setEditingProduct(dados);
   };
 
   const filteredCategories =
@@ -265,18 +300,16 @@ export default function Page() {
         <DialogContent className="md:min-w-2xl max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}
-              {settings.pdvIntegrations.length > 0 && (
+              {editingProduct?.id ? "Editar Produto" : "Adicionar Novo Produto"}
+              {settings?.pdvIntegrations?.length > 0 && (
                 <ImportOptionsModal
                   title="Importar Produtos"
-                  onImport={(data) => {
-                    console.log(data);
-                  }}
+                  onImport={handleImportProducts}
                 />
               )}
             </DialogTitle>
             <DialogDescription>
-              {editingProduct
+              {editingProduct?.id
                 ? "Edite os detalhes do produto selecionado."
                 : "Preencha os detalhes para adicionar um novo produto."}
             </DialogDescription>

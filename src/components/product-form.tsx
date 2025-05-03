@@ -21,7 +21,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FileUpload } from "./ui/file-upload";
 import {
@@ -46,7 +46,6 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const user = authService.getUser();
-  const settings = authService.getSettings();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -57,15 +56,31 @@ export function ProductForm({
       categoriaId: product?.categoriaId || "",
       imagem: undefined,
       updateFrom: product?.updateFrom || "",
+      externoId: product?.externoId || "",
     },
   });
 
+  const previewImage = form.watch("imagem");
+
   const handleSubmit = (data: ProductFormValues) => {
-    data.imagem = imageFile;
+    if (imageFile && imageFile instanceof File) {
+      data.imagem = imageFile;
+    }
     data.updateFrom = user.username;
     onSubmit(data);
   };
 
+  useEffect(() => {
+    if (product) {
+      console.log("product-form", product);
+      form.setValue("id", product.id || "");
+      form.setValue("nome", product.nome || "");
+      form.setValue("descricao", product.descricao || "");
+      form.setValue("preco", product.preco?.toString() || "");
+      form.setValue("imagem", product.imagem || "");
+      form.setValue("externoId", product.externoId || "");
+    }
+  }, [product]);
   return (
     <Form {...form}>
       <form
@@ -94,7 +109,10 @@ export function ProductForm({
               name="nome"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Produto</FormLabel>
+                  <FormLabel>
+                    <span className="text-destructive mr-1">*</span>Nome do
+                    Produto
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: X-Burger" {...field} />
                   </FormControl>
@@ -132,7 +150,9 @@ export function ProductForm({
               name="preco"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Preço</FormLabel>
+                  <FormLabel>
+                    <span className="text-destructive mr-1">*</span>Preço
+                  </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -156,8 +176,7 @@ export function ProductForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <span className="text-destructive mr-1">*</span>
-                    Categoria
+                    <span className="text-destructive mr-1">*</span>Categoria
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -199,7 +218,7 @@ export function ProductForm({
               <div className="border border-dashed rounded-lg p-4 bg-muted/30">
                 <FileUpload
                   onChange={setImageFile}
-                  previewUrl={product?.imagem}
+                  previewUrl={previewImage || product?.imagem}
                   label="Selecionar imagem do produto"
                 />
                 <FormDescription className="mt-2">

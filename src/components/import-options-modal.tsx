@@ -16,13 +16,15 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { useEffect, useRef, useState } from "react";
 
+export interface ImportEventTypes {
+  codigo_produto: number;
+  descricao: string;
+  valor_unitario: string;
+  isImported: boolean;
+}
+
 interface ImportOptionsModalProps {
-  onImport: (selectedOptions: {
-    codigo_produto: number;
-    descricao: string;
-    valor_unitario: string;
-    isImported: boolean;
-  }) => void;
+  onImport: (selectedOptions: ImportEventTypes) => void;
   title?: string;
 }
 

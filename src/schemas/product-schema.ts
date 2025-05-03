@@ -1,8 +1,9 @@
 import * as z from "zod";
 
 export const productFormSchema = z.object({
+  id: z.string().optional(),
   nome: z.string().min(1, "O nome do produto é obrigatório"),
-  descricao: z.string().min(1, "A descrição do produto é obrigatória"),
+  descricao: z.string().optional(),
   preco: z
     .string()
     .min(1, "O preço é obrigatório")
@@ -13,24 +14,25 @@ export const productFormSchema = z.object({
   imagem: z.any().optional(),
   ativo: z.boolean().default(true),
   updateFrom: z.string().optional(),
+  externoId: z.string().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;
 
 export interface Product {
-  id: string;
+  id?: string;
   nome: string;
-  descricao: string;
+  descricao?: string;
   imagem: string;
   preco: number;
-  categoriaId: string;
-  externoId: any;
-  codigo: any;
-  restaurantCnpj: string;
-  delete: boolean;
-  createAt: string;
-  updateAt: any;
+  categoriaId?: string;
+  externoId?: string;
+  codigo?: any;
+  restaurantCnpj?: string;
+  delete?: boolean;
+  createAt?: string;
+  updateAt?: any;
   updateFrom?: string;
-  ativo: boolean;
+  ativo?: boolean;
   ordem?: number;
 }

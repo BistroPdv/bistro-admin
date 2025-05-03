@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { RiUpload2Line } from "@remixicon/react";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Button } from "./button";
 import { Input } from "./input";
 
@@ -56,6 +56,10 @@ export function FileUpload({
       URL.revokeObjectURL(fileUrl);
     };
   };
+
+  useEffect(() => {
+    setPreview(previewUrl || null);
+  }, [previewUrl]);
 
   const clearFile = () => {
     setPreview(null);
