@@ -1,6 +1,7 @@
 "use client";
 
 import Logo from "@/assets/logo/logo.svg";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +37,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [saveCredentials, setSaveCredentials] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const {
     register,
@@ -100,6 +102,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    setLoginError(null); // Limpa erros anteriores
 
     try {
       // Salvar credenciais se o checkbox estiver marcado
@@ -110,15 +113,24 @@ export default function LoginPage() {
       }
 
       const response = await authService.login(data);
-      toast.success("Login realizado com sucesso!");
-      router.push("/dashboard");
+      if (response.status === 201) {
+        toast.success("Login realizado com sucesso!");
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       if (error.response) {
-        toast.error(error.response.data?.message || "Credenciais inválidas");
+        console.log(error.response.data);
+        const errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          "Credenciais inválidas";
+        setLoginError(errorMessage);
+        toast.error(errorMessage);
       } else {
-        toast.error("Erro ao conectar ao servidor. Tente novamente.");
+        const errorMessage = "Erro ao conectar ao servidor. Tente novamente.";
+        setLoginError(errorMessage);
+        toast.error(errorMessage);
       }
-      console.error("Erro de login:", error);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +157,16 @@ export default function LoginPage() {
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-4 sm:space-y-6"
+            noValidate
           >
+            {loginError && (
+              <Alert variant="destructive" className="py-2">
+                <AlertDescription className="text-sm">
+                  {loginError}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="login" className="text-sm">
                 Login

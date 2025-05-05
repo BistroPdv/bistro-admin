@@ -27,7 +27,7 @@ api.interceptors.response.use(
     if (error.response) {
       console.error("Erro na resposta:", error.response.data);
 
-      if (error.response.status === 401) {
+      if (error.response.status === 401 && window.location.pathname !== "/") {
         localStorage.removeItem("token");
         window.location.href = "/";
       }

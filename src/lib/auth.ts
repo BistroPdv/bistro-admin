@@ -52,7 +52,9 @@ export const authService = {
    * @param credentials Credenciais de login (login, senha e CNPJ)
    * @returns Promise com os dados do usuário e token
    */
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(
+    credentials: LoginCredentials
+  ): Promise<AxiosResponse<AuthResponse>> {
     try {
       const response = await api.post<AuthResponse>("/auth/login", credentials);
 
@@ -68,7 +70,7 @@ export const authService = {
         localStorage.setItem("settings", JSON.stringify(settings.data.data));
       }
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       throw error;
