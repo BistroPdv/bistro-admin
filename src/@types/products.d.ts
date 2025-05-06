@@ -36,6 +36,7 @@ export interface Adicional {
     id?: string;
     nome: string;
     preco?: number;
+    delete: boolean;
     ativo: boolean;
     codIntegra?: string;
     isImported?: boolean;
