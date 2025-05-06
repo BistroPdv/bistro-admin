@@ -24,6 +24,7 @@ import { ProductCard } from "./product-card";
 import { ProductListItem } from "./product-list-item";
 import { SortableProductCard } from "./sortable-product-card";
 import { SortableProductListItem } from "./sortable-product-list-item";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
 interface ProductsGridProps {
@@ -165,6 +166,11 @@ export function ProductsGrid({
                       <RiPencilLine />
                     </Button>
                     <h2 className="text-xl font-semibold">{category.nome}</h2>
+                    {!category.ativo && (
+                      <Badge className="bg-destructive text-xs font-medium">
+                        Inativo
+                      </Badge>
+                    )}
 
                     <span className="px-2 py-1 text-xs font-medium rounded-full">
                       {category.produtos?.length} produtos
