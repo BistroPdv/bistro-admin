@@ -2,8 +2,13 @@ import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
+import { Metadata } from "next";
 import { ReactNode } from "react";
 import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Bistro Admin - Login",
+};
 
 const fontSans = Inter({
   subsets: ["latin"],
