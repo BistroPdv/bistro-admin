@@ -8,6 +8,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Bistro Admin - Login",
+  description: "Gestor de administrativo para o Bistro",
+  authors: [{ name: "Diego Carlos", url: "https://diego-carlos.top" }],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 const fontSans = Inter({
