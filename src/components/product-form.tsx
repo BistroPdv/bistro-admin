@@ -20,7 +20,7 @@ import {
 } from "@/schemas/product-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
-import { PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FileUpload } from "./ui/file-upload";
@@ -37,12 +37,14 @@ interface ProductFormProps {
   categories: Category[];
   onSubmit: (data: ProductFormValues) => void;
   product?: Product;
+  loading?: boolean;
 }
 
 export function ProductForm({
   categories,
   onSubmit,
   product,
+  loading = false,
 }: ProductFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const user = authService.getUser();
@@ -231,8 +233,12 @@ export function ProductForm({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" className="gap-2">
-            <PlusCircle className="h-4 w-4" />
+          <Button disabled={loading} type="submit" className="gap-2">
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlusCircle className="h-4 w-4" />
+            )}
             {product ? "Salvar Alterações" : "Adicionar Produto"}
           </Button>
         </div>

@@ -190,8 +190,6 @@ export default function Page() {
 
   const handleSubmit = (data: ProductFormValues) => {
     if (editingProduct) {
-      console.log("update", data);
-
       updateProductMutation.mutate({
         ...data,
         id: editingProduct.id || "",
@@ -316,6 +314,9 @@ export default function Page() {
           </DialogHeader>
 
           <ProductForm
+            loading={
+              updateProductMutation.isPending || createProductMutation.isPending
+            }
             categories={data?.data || []}
             onSubmit={handleSubmit}
             product={editingProduct || undefined}
