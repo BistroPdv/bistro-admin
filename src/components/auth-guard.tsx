@@ -17,7 +17,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const checkAuth = () => {
       const authenticated = authService.isAuthenticated();
       setIsAuthenticated(authenticated);
-      console.log("authenticated", authenticated);
       if (!authenticated) {
         router.push("/");
       }
