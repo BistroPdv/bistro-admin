@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["s3.bistro.app.br", "cdn.omie.com.br"],
+    domains: ["s3.bistro.app.br", "cdn.omie.com.br", "omie.com.br"],
   },
   async headers() {
     // Desativa headers de segurança em desenvolvimento
@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://s3.bistro.app.br https://lh3.googleusercontent.com https://cdn.omie.com.br; font-src 'self' data:; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://api.bistro.app.br; frame-src 'self' https://accounts.google.com",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://s3.bistro.app.br https://lh3.googleusercontent.com https://cdn.omie.com.br https://www.omie.com.br; font-src 'self' data:; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://api.bistro.app.br; frame-src 'self' https://accounts.google.com",
           },
         ],
       },
