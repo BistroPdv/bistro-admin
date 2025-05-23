@@ -20,11 +20,9 @@ import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 
 export default function Page() {
-  const cnpj = JSON.parse(localStorage.getItem("user") || "{}").restaurantCnpj;
-
   const dataDashboard = useQuery<AxiosResponse, Error, DashboardTypes>({
     queryKey: ["dataDashboard"],
-    queryFn: () => api.get(`/dashboard/${cnpj}`),
+    queryFn: () => api.get(`/dashboard`),
     select: (data) => data.data,
   });
 

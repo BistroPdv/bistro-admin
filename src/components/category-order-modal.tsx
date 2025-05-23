@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -71,10 +72,7 @@ export function CategoryOrderModal({
         };
       });
 
-      return api.put(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/categorias/ordem`,
-        updates
-      );
+      return api.put(`/categorias/ordem`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -121,7 +119,7 @@ export function CategoryOrderModal({
               items={items}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-auto max-h-[calc(100vh-18rem)] px-2">
                 {items.map((category) => (
                   <SortableItem key={category.id} id={category.id}>
                     <div className="flex bg-muted items-center cursor-move select-none py-3 px-4 gap-3 border rounded-md">
@@ -135,12 +133,12 @@ export function CategoryOrderModal({
           </DndContext>
         </div>
 
-        <div className="flex justify-end space-x-2">
+        <DialogFooter className="flex justify-end space-x-2">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
           <Button onClick={handleSaveOrder}>Salvar</Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

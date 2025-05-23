@@ -106,7 +106,7 @@ export function CompanySettingsForm() {
       const resp = api.get("/settings");
       return resp;
     },
-    select: (data) => data.data,
+    select: (data) => data,
   });
 
   useEffect(() => {
@@ -114,9 +114,7 @@ export function CompanySettingsForm() {
       try {
         setIsLoadingPrinters(true);
         console.log("Iniciando carregamento de impressoras...");
-        const response = await api.get(
-          `/restaurantCnpj/${local.restaurantCnpj}/printers`
-        );
+        const response = await api.get(`/printers`);
         if (response.data) {
           setPrinters(response.data?.data);
         }
@@ -202,9 +200,7 @@ export function CompanySettingsForm() {
   const removeBanner = useCallback(
     async (index: number, id: string) => {
       try {
-        await api.delete(
-          `/restaurantCnpj/${local.restaurantCnpj}/banners/${id}`
-        );
+        await api.delete(`/banners/${id}`);
         const currentBanners = form.getValues("banners") || [];
         const updatedBanners = [...currentBanners];
         updatedBanners.splice(index, 1);
@@ -235,12 +231,9 @@ export function CompanySettingsForm() {
       if (resp.status === 200 && banners.length > 0) {
         for (let i = 0; i < banners.length; i++) {
           const banner = banners[i];
-          await api.postForm(
-            `/restaurantCnpj/${local.restaurantCnpj}/banners`,
-            {
-              banner,
-            }
-          );
+          await api.postForm(`/banners`, {
+            banner,
+          });
         }
       }
 

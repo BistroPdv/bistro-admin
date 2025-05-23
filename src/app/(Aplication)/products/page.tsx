@@ -4,10 +4,7 @@ import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import { CategoryForm } from "@/components/category-form";
 import { CategoryOrderModal } from "@/components/category-order-modal";
-import {
-  ImportEventTypes,
-  ImportOptionsModal,
-} from "@/components/import-options-modal";
+import { ImportEventTypes } from "@/components/import-options-modal";
 import { ProductForm } from "@/components/product-form";
 import { ProductsGrid } from "@/components/products-grid";
 import { Button } from "@/components/ui/button";
@@ -20,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
-import { authService } from "@/lib/auth";
 import { Product, ProductFormValues } from "@/schemas/product-schema";
 import {
   RiLayoutGridLine,
@@ -43,20 +39,17 @@ export default function Page() {
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const queryClient = useQueryClient();
 
-  const settings = authService.getSettings();
-
   const local = localStorage.getItem("user");
   const cnpj = JSON.parse(local || "");
-  const { data, isLoading, error, refetch } = useQuery<
-    AxiosResponse,
-    Error,
-    PaginatedResult<Category>
-  >({
+  const {
+    data: categories,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<AxiosResponse, Error, PaginatedResult<Category>>({
     queryKey: ["products"],
     queryFn: () => {
-      const response = api.get(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/categorias`
-      );
+      const response = api.get(`/categorias`);
       return response;
     },
     select: (resp) => resp.data,
@@ -64,12 +57,6 @@ export default function Page() {
 
   const createProductMutation = useMutation({
     mutationFn: async (formData: ProductFormValues & { file?: File }) => {
-      // Verificar o valor do updateFrom antes da requisição
-      console.log(
-        "updateFrom antes da requisição (create):",
-        formData.updateFrom
-      );
-
       // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
@@ -105,9 +92,6 @@ export default function Page() {
     mutationFn: async (
       formData: ProductFormValues & { id: string; file?: File }
     ) => {
-      // Verificar o valor do updateFrom antes da requisição
-      console.log("formData", formData);
-      // Criar FormData para upload de imagem
       const productData = new FormData();
       productData.append("nome", formData.nome);
       productData.append("descricao", formData.descricao || "");
@@ -123,14 +107,14 @@ export default function Page() {
       }
       if (formData.id) {
         // Endpoint para atualizar produto
-        const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${formData.id}`;
+        const endpoint = `/produtos/${formData.id}`;
         return api.put(endpoint, productData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
       } else {
-        const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos`;
+        const endpoint = `/produtos`;
         return api.post(endpoint, productData, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -162,10 +146,7 @@ export default function Page() {
         categoriaId: categoryId,
       }));
 
-      const response = await api.put(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/ordem`,
-        updates
-      );
+      const response = await api.put(`/produtos/ordem`, updates);
       return response.data;
     },
     onSuccess: () => {
@@ -229,7 +210,7 @@ export default function Page() {
   };
 
   const filteredCategories =
-    data?.data?.map((category) => ({
+    categories?.data?.map((category) => ({
       ...category,
       produtos: category.produtos?.filter((product) =>
         product.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -294,35 +275,17 @@ export default function Page() {
         />
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="md:min-w-2xl max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {editingProduct?.id ? "Editar Produto" : "Adicionar Novo Produto"}
-              {settings?.pdvIntegrations?.length > 0 && (
-                <ImportOptionsModal
-                  title="Importar Produtos"
-                  onImport={handleImportProducts}
-                />
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {editingProduct?.id
-                ? "Edite os detalhes do produto selecionado."
-                : "Preencha os detalhes para adicionar um novo produto."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <ProductForm
-            loading={
-              updateProductMutation.isPending || createProductMutation.isPending
-            }
-            categories={data?.data || []}
-            onSubmit={handleSubmit}
-            product={editingProduct || undefined}
-          />
-        </DialogContent>
-      </Dialog>
+      <ProductForm
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
+        handleImportProducts={handleImportProducts}
+        loading={
+          updateProductMutation.isPending || createProductMutation.isPending
+        }
+        categories={categories?.data || []}
+        onSubmit={handleSubmit}
+        product={editingProduct || undefined}
+      />
 
       <Dialog
         open={isCategoryDialogOpen}
@@ -347,7 +310,7 @@ export default function Page() {
       <CategoryOrderModal
         isOpen={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
-        categories={data?.data || []}
+        categories={categories?.data || []}
       />
     </div>
   );

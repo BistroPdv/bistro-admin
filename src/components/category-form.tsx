@@ -241,9 +241,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
       try {
         // Obter o CNPJ do restaurante do localStorage ou de onde estiver armazenado
         const cnpjData = JSON.parse(localStorage.getItem("user") || "{}");
-        const response = await api.get(
-          `/restaurantCnpj/${cnpjData.restaurantCnpj}/printers`
-        );
+        const response = await api.get(`/printers`);
         if (response.data) {
           setPrinters(response.data?.data);
         }

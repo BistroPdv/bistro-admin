@@ -26,6 +26,7 @@ export interface Product {
   imagem: string;
   preco: number;
   categoriaId?: string;
+  categoria?: { id: string };
   externoId?: string;
   codigo?: any;
   restaurantCnpj?: string;

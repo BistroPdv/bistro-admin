@@ -67,7 +67,7 @@ export const authService = {
       if (response.status === 201) {
         const settings: AxiosResponse<{ data: SettingsResponse }> =
           await api.get("/settings");
-        localStorage.setItem("settings", JSON.stringify(settings.data.data));
+        localStorage.setItem("settings", JSON.stringify(settings.data));
       }
 
       return response;

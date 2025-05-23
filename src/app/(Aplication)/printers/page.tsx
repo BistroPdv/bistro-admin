@@ -27,7 +27,7 @@ export default function PrintersPage() {
     refetch,
   } = useQuery({
     queryKey: ["printers"],
-    queryFn: () => api.get(`/restaurantCnpj/${cnpj.restaurantCnpj}/printers`),
+    queryFn: () => api.get(`/printers`),
     select: (res) => res.data,
   });
 
@@ -41,19 +41,13 @@ export default function PrintersPage() {
         restaurantCnpj: cnpj.restaurantCnpj,
       };
       if (data.id) {
-        const resp = await api.put(
-          `/restaurantCnpj/${cnpj.restaurantCnpj}/printers/${data.id}`,
-          newPrinter
-        );
+        const resp = await api.put(`/printers/${data.id}`, newPrinter);
         if (resp.status === 200) {
           toast.success("Impressora atualizada com sucesso");
           refetch();
         }
       } else {
-        const resp = await api.post(
-          `/restaurantCnpj/${cnpj.restaurantCnpj}/printers`,
-          newPrinter
-        );
+        const resp = await api.post(`/printers`, newPrinter);
         if (resp.status === 201) {
           toast.success("Impressora criada com sucesso");
           refetch();
@@ -77,9 +71,7 @@ export default function PrintersPage() {
 
   const handleDeletePrinter = async (printerId?: string) => {
     try {
-      const resp = await api.delete(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/printers/${printerId}`
-      );
+      const resp = await api.delete(`/printers/${printerId}`);
       if (resp.status === 200) {
         toast.success("Impressora excluída com sucesso");
         refetch();
