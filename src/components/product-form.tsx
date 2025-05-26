@@ -26,7 +26,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { Loader2, PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ImportEventTypes, ImportOptionsModal } from "./import-options-modal";
 import { Button } from "./ui/button";
@@ -63,6 +63,7 @@ export function ProductForm({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const user = authService.getUser();
   const settings = authService.getSettings();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -89,7 +90,6 @@ export function ProductForm({
 
   useEffect(() => {
     if (product) {
-      console.log("product-form", product);
       form.setValue("id", product.id || "");
       form.setValue("nome", product.nome || "");
       form.setValue("descricao", product.descricao || "");
@@ -136,6 +136,8 @@ export function ProductForm({
         <div className="flex-1 overflow-y-auto py-4">
           <Form {...form}>
             <form
+              id="product-form"
+              ref={formRef}
               onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-6 relative"
             >
@@ -293,7 +295,12 @@ export function ProductForm({
 
         <DialogFooter className="flex-none border-t pt-4 relative">
           <div className="flex justify-between gap-2">
-            <Button disabled={loading} type="submit" className="gap-2">
+            <Button
+              disabled={loading}
+              form="product-form"
+              type="submit"
+              className="gap-2"
+            >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

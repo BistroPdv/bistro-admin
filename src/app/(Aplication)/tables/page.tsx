@@ -82,7 +82,6 @@ export default function Page() {
     queryFn: () => api.get(`/mesas`),
     select: (resp) => resp.data,
   });
-  console.log(tables);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<TableType | null>(null);
 

@@ -45,13 +45,10 @@ export function ProductCard({
 
   const updateProductStatusMutation = useMutation({
     mutationFn: async (newStatus: boolean) => {
-      return api.patch(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${product.id}/toggle-status`,
-        {
-          ...product,
-          ativo: newStatus,
-        }
-      );
+      return api.patch(`/produtos/${product.id}/toggle-status`, {
+        ...product,
+        ativo: newStatus,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -76,11 +73,7 @@ export function ProductCard({
     try {
       setIsModalOpen(false);
 
-      console.log(product);
-
-      const resp = await api.delete(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${product.id}`
-      );
+      const resp = await api.delete(`/produtos/${product.id}`);
       if (resp.status === 200) {
         onDelete && onDelete(product);
         toast.success("Produto excluído com sucesso!");

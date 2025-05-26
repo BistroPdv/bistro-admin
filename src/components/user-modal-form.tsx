@@ -64,8 +64,6 @@ export function UserFormModal({
     }
   }, [editingUser]);
 
-  console.log(editingUser);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">

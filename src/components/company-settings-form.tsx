@@ -113,7 +113,6 @@ export function CompanySettingsForm() {
     const fetchPrinters = async () => {
       try {
         setIsLoadingPrinters(true);
-        console.log("Iniciando carregamento de impressoras...");
         const response = await api.get(`/printers`);
         if (response.data) {
           setPrinters(response.data?.data);
@@ -218,7 +217,6 @@ export function CompanySettingsForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      console.log("Dados do formulário:", data);
       const banners = data.banners || [];
       delete data.banners;
       const resp = await api.putForm("/settings", {

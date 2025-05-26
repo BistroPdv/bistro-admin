@@ -36,18 +36,12 @@ export function ProductListItem({
     currency: "BRL",
   }).format(product.preco);
 
-  const local = localStorage.getItem("user");
-  const cnpj = JSON.parse(local || "");
-
   const updateProductStatusMutation = useMutation({
     mutationFn: async (newStatus: boolean) => {
-      return api.patch(
-        `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos/${product.id}/toggle-status`,
-        {
-          ...product,
-          ativo: newStatus,
-        }
-      );
+      return api.patch(`/produtos/${product.id}/toggle-status`, {
+        ...product,
+        ativo: newStatus,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

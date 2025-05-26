@@ -26,7 +26,7 @@ import {
 } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function Page() {
@@ -37,6 +37,7 @@ export default function Page() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const formRef = useRef<HTMLFormElement>(null);
   const queryClient = useQueryClient();
 
   const local = localStorage.getItem("user");
@@ -72,7 +73,7 @@ export default function Page() {
       }
 
       // Endpoint para criar produto
-      const endpoint = `/restaurantCnpj/${cnpj.restaurantCnpj}/produtos`;
+      const endpoint = `/produtos`;
       return api.post(endpoint, productData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -176,7 +177,6 @@ export default function Page() {
         id: editingProduct.id || "",
       });
     } else {
-      console.log("create", data);
       createProductMutation.mutate(data);
     }
   };

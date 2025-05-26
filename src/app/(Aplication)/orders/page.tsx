@@ -25,6 +25,7 @@ export default function OrdersPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isLoading,
     status,
     refetch,
   } = useInfiniteQuery({
@@ -85,7 +86,6 @@ export default function OrdersPage() {
   // Função para reimprimir o pedido
   const handleReprint = () => {
     if (selectedOrder) {
-      console.log(`Reimprimindo pedido ${selectedOrder.pdvCodPedido}`);
       // Aqui seria implementada a lógica de reimpressão
       alert(`Pedido ${selectedOrder.pdvCodPedido} enviado para impressão!`);
     }
@@ -129,11 +129,11 @@ export default function OrdersPage() {
       <div className="flex flex-col md:flex-row h-[calc(100vh-12rem)] gap-4 flex-1 overflow-auto">
         {(showOrdersList || window.innerWidth >= 768) && (
           <OrderList
-            orders={orders}
+            orders={orders || []}
             selectedOrder={selectedOrder}
             onSelectOrder={handleSelectOrder}
             onScroll={handleScroll}
-            isLoading={status === "pending"}
+            isLoading={isLoading}
             isFetchingNextPage={isFetchingNextPage}
           />
         )}

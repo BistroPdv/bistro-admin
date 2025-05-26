@@ -22,6 +22,7 @@ import { RiDraggable } from "@remixicon/react";
 import { useForm } from "react-hook-form";
 
 import { Category } from "@/@types/products";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -566,329 +567,342 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
                 )}
                 strategy={verticalListSortingStrategy}
               >
-                {adicionais.map((adicional, adicionalIndex) => (
-                  <SortableAdicionalItem
-                    key={adicional.id || `temp-${adicionalIndex}`}
-                    id={adicional.id || `temp-${adicionalIndex}`}
-                    isDraggable={isDraggable}
-                  >
-                    <div className="border rounded-lg bg-muted/20 shadow-sm hover:shadow-md transition-shadow">
-                      <div
-                        className="flex items-center justify-between p-4 cursor-pointer"
-                        onClick={() => toggleAdicional(adicionalIndex)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${
-                              expandedAdicionais.includes(adicionalIndex)
-                                ? "rotate-180"
-                                : ""
-                            }`}
-                          />
-                          <h4 className="font-medium text-lg">
-                            {form.getValues(
-                              `adicionais.${adicionalIndex}.titulo`
-                            ) || "Novo Grupo de Adicionais"}
-                          </h4>
-                          {isDraggable && (
-                            <span className="text-sm text-muted-foreground">
-                              Ordem: {adicional.ordem || adicionalIndex + 1}
-                            </span>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveAdicional(adicionalIndex);
-                          }}
-                          className="flex items-center gap-1"
+                {adicionais.map((adicional, adicionalIndex) => {
+                  const formValue = form.getValues(
+                    `adicionais.${adicionalIndex}`
+                  );
+                  return (
+                    <SortableAdicionalItem
+                      key={adicional.id || `temp-${adicionalIndex}`}
+                      id={adicional.id || `temp-${adicionalIndex}`}
+                      isDraggable={isDraggable}
+                    >
+                      <div className="border rounded-lg bg-muted/20 shadow-sm hover:shadow-md transition-shadow">
+                        <div
+                          className="flex items-center justify-between p-4 cursor-pointer"
+                          onClick={() => toggleAdicional(adicionalIndex)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Excluir grupo</span>
-                        </Button>
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${
+                                expandedAdicionais.includes(adicionalIndex)
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
+                            />
+                            <h4 className="font-medium text-lg">
+                              {formValue.titulo || "Novo Grupo de Adicionais"}
+                            </h4>
 
-                      {expandedAdicionais.includes(adicionalIndex) && (
-                        <div className="p-4 border-t space-y-4">
-                          <div className="space-y-4">
-                            <div className="flex gap-4 w-full">
-                              <div className="w-full">
-                                <FormItem>
-                                  <FormLabel>Título</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      className="flex-1"
-                                      value={adicional.titulo}
-                                      onChange={(e) =>
-                                        handleAdicionalChange(
-                                          adicionalIndex,
-                                          "titulo",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Ex: Ponto da Carne"
-                                    />
-                                  </FormControl>
-                                  <FormDescription>
-                                    Título do grupo de adicionais
-                                  </FormDescription>
-                                </FormItem>
-                              </div>
-                              <div>
-                                <FormItem>
-                                  <FormLabel>Qtd. Mínima</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      className="w-32"
-                                      type="number"
-                                      min="0"
-                                      value={adicional.qtdMinima}
-                                      onChange={(e) =>
-                                        handleAdicionalChange(
-                                          adicionalIndex,
-                                          "qtdMinima",
-                                          Number(e.target.value)
-                                        )
-                                      }
-                                      placeholder="0"
-                                    />
-                                  </FormControl>
-                                  <FormDescription>
-                                    Mínimo de opções
-                                  </FormDescription>
-                                </FormItem>
-                              </div>
-                              <div>
-                                <FormItem>
-                                  <FormLabel>Qtd. Máxima</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      className="w-32"
-                                      type="number"
-                                      min="1"
-                                      value={adicional.qtdMaxima}
-                                      onChange={(e) =>
-                                        handleAdicionalChange(
-                                          adicionalIndex,
-                                          "qtdMaxima",
-                                          Number(e.target.value)
-                                        )
-                                      }
-                                      placeholder="1"
-                                    />
-                                  </FormControl>
-                                  <FormDescription>
-                                    Máximo de opções
-                                  </FormDescription>
-                                </FormItem>
-                              </div>
-                              <div>
-                                <FormItem className="w-32">
-                                  <FormLabel>Obrigatório</FormLabel>
-                                  <Select
-                                    value={
-                                      adicional.obrigatorio ? "sim" : "nao"
-                                    }
-                                    onValueChange={(value) =>
-                                      handleAdicionalChange(
-                                        adicionalIndex,
-                                        "obrigatorio",
-                                        value === "sim"
-                                      )
-                                    }
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="sim">Sim</SelectItem>
-                                      <SelectItem value="nao">Não</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormDescription>
-                                    É obrigatório?
-                                  </FormDescription>
-                                </FormItem>
-                              </div>
-                              <div>
-                                <FormItem>
-                                  <FormLabel>Ativo?</FormLabel>
-                                  <Select
-                                    value={adicional.ativo ? "sim" : "nao"}
-                                    onValueChange={(value) =>
-                                      handleAdicionalChange(
-                                        adicionalIndex,
-                                        "ativo",
-                                        value === "sim"
-                                      )
-                                    }
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="sim">Sim</SelectItem>
-                                      <SelectItem value="nao">Não</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormItem>
-                              </div>
-                            </div>
+                            {isDraggable && (
+                              <span className="text-sm text-muted-foreground">
+                                Ordem: {adicional.ordem || adicionalIndex + 1}
+                              </span>
+                            )}
+                            {!formValue.ativo && (
+                              <Badge
+                                variant="destructive"
+                                className="text-xs font-medium"
+                              >
+                                Inativo
+                              </Badge>
+                            )}
+                          </div>
 
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <FormLabel>Opções do Adicional</FormLabel>
-                                <div className="flex gap-2">
-                                  <ImportOptionsModal
-                                    onImport={(selectedOptions) => {
-                                      const newOpcoes = [...adicional.opcoes];
-                                      newOpcoes.push({
-                                        id: undefined,
-                                        codIntegra:
-                                          selectedOptions.codigo_produto.toString(),
-                                        nome: selectedOptions.descricao,
-                                        preco: selectedOptions.valor_unitario,
-                                        ativo: true,
-                                        delete: false,
-                                      });
-                                      handleAdicionalChange(
-                                        adicionalIndex,
-                                        "opcoes",
-                                        newOpcoes
-                                      );
-                                    }}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1"
-                                    onClick={() =>
-                                      handleAddOpcao(adicionalIndex)
-                                    }
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    Adicionar Opção
-                                  </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveAdicional(adicionalIndex);
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Excluir grupo</span>
+                          </Button>
+                        </div>
+
+                        {expandedAdicionais.includes(adicionalIndex) && (
+                          <div className="p-4 border-t space-y-4">
+                            <div className="space-y-4">
+                              <div className="flex gap-4 w-full">
+                                <div className="w-full">
+                                  <FormItem>
+                                    <FormLabel>Título</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        className="flex-1"
+                                        value={adicional.titulo}
+                                        onChange={(e) =>
+                                          handleAdicionalChange(
+                                            adicionalIndex,
+                                            "titulo",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Ex: Ponto da Carne"
+                                      />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Título do grupo de adicionais
+                                    </FormDescription>
+                                  </FormItem>
+                                </div>
+                                <div>
+                                  <FormItem>
+                                    <FormLabel>Qtd. Mínima</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        className="w-32"
+                                        type="number"
+                                        min="0"
+                                        value={adicional.qtdMinima}
+                                        onChange={(e) =>
+                                          handleAdicionalChange(
+                                            adicionalIndex,
+                                            "qtdMinima",
+                                            Number(e.target.value)
+                                          )
+                                        }
+                                        placeholder="0"
+                                      />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Mínimo de opções
+                                    </FormDescription>
+                                  </FormItem>
+                                </div>
+                                <div>
+                                  <FormItem>
+                                    <FormLabel>Qtd. Máxima</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        className="w-32"
+                                        type="number"
+                                        min="1"
+                                        value={adicional.qtdMaxima}
+                                        onChange={(e) =>
+                                          handleAdicionalChange(
+                                            adicionalIndex,
+                                            "qtdMaxima",
+                                            Number(e.target.value)
+                                          )
+                                        }
+                                        placeholder="1"
+                                      />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Máximo de opções
+                                    </FormDescription>
+                                  </FormItem>
+                                </div>
+                                <div>
+                                  <FormItem className="w-32">
+                                    <FormLabel>Obrigatório</FormLabel>
+                                    <Select
+                                      value={
+                                        adicional.obrigatorio ? "sim" : "nao"
+                                      }
+                                      onValueChange={(value) =>
+                                        handleAdicionalChange(
+                                          adicionalIndex,
+                                          "obrigatorio",
+                                          value === "sim"
+                                        )
+                                      }
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="sim">Sim</SelectItem>
+                                        <SelectItem value="nao">Não</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                      É obrigatório?
+                                    </FormDescription>
+                                  </FormItem>
+                                </div>
+                                <div>
+                                  <FormItem>
+                                    <FormLabel>Ativo?</FormLabel>
+                                    <Select
+                                      value={adicional.ativo ? "sim" : "nao"}
+                                      onValueChange={(value) =>
+                                        handleAdicionalChange(
+                                          adicionalIndex,
+                                          "ativo",
+                                          value === "sim"
+                                        )
+                                      }
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="sim">Sim</SelectItem>
+                                        <SelectItem value="nao">Não</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
                                 </div>
                               </div>
-
-                              {adicional.opcoes.length === 0 && (
-                                <div className="text-center p-2 border rounded-md bg-background/50">
-                                  <p className="text-sm text-muted-foreground">
-                                    Nenhuma opção adicionada
-                                  </p>
-                                </div>
-                              )}
 
                               <div className="space-y-2">
-                                {adicional.opcoes.map(
-                                  (opcao, opcaoIndex) =>
-                                    !opcao.delete && (
-                                      <div
-                                        key={opcaoIndex}
-                                        className="flex flex-col sm:flex-row items-start sm:items-center gap-2"
-                                      >
-                                        <div className="flex flex-row gap-2 items-center w-full">
-                                          <SwitchWithText
-                                            checked={opcao.ativo}
-                                            onCheckedChange={(checked) =>
-                                              handleOpcaoChange(
-                                                adicionalIndex,
-                                                opcaoIndex,
-                                                "ativo",
-                                                checked
-                                              )
-                                            }
-                                            uncheckText="Não"
-                                            checkText="Sim"
-                                          />
-                                          <Input
-                                            value={opcao.codIntegra || ""}
-                                            onChange={(e) =>
-                                              handleOpcaoChange(
-                                                adicionalIndex,
-                                                opcaoIndex,
-                                                "codIntegra",
-                                                e.target.value
-                                              )
-                                            }
-                                            placeholder="Codigo"
-                                            className="w-32 text-sm"
-                                            disabled={opcao.isImported}
-                                          />
-                                          <Input
-                                            value={opcao.nome}
-                                            onChange={(e) =>
-                                              handleOpcaoChange(
-                                                adicionalIndex,
-                                                opcaoIndex,
-                                                "nome",
-                                                e.target.value
-                                              )
-                                            }
-                                            placeholder="Ex: Bem passada"
-                                            className="w-full text-sm sm:col-span-2"
-                                          />
-                                          <div className="flex items-center gap-1">
-                                            <div className="relative flex-1">
-                                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                                R$
-                                              </span>
-                                              <Input
-                                                value={String(opcao.preco)}
-                                                onChange={(e) =>
-                                                  handleOpcaoChange(
-                                                    adicionalIndex,
-                                                    opcaoIndex,
-                                                    "preco",
-                                                    e.target.value
-                                                  )
-                                                }
-                                                placeholder="0,00"
-                                                className="pl-6 text-sm"
-                                              />
-                                            </div>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="icon"
-                                              className="h-8 w-8 border-red-200 hover:bg-red-100 hover:text-red-600"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveOpcao(
+                                <div className="flex items-center justify-between">
+                                  <FormLabel>Opções do Adicional</FormLabel>
+                                  <div className="flex gap-2">
+                                    <ImportOptionsModal
+                                      onImport={(selectedOptions) => {
+                                        const newOpcoes = [...adicional.opcoes];
+                                        newOpcoes.push({
+                                          id: undefined,
+                                          codIntegra:
+                                            selectedOptions.codigo_produto.toString(),
+                                          nome: selectedOptions.descricao,
+                                          preco: selectedOptions.valor_unitario,
+                                          ativo: true,
+                                          delete: false,
+                                        });
+                                        handleAdicionalChange(
+                                          adicionalIndex,
+                                          "opcoes",
+                                          newOpcoes
+                                        );
+                                      }}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-1"
+                                      onClick={() =>
+                                        handleAddOpcao(adicionalIndex)
+                                      }
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      Adicionar Opção
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {adicional.opcoes.length === 0 && (
+                                  <div className="text-center p-2 border rounded-md bg-background/50">
+                                    <p className="text-sm text-muted-foreground">
+                                      Nenhuma opção adicionada
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="space-y-2">
+                                  {adicional.opcoes.map(
+                                    (opcao, opcaoIndex) =>
+                                      !opcao.delete && (
+                                        <div
+                                          key={opcaoIndex}
+                                          className="flex flex-col sm:flex-row items-start sm:items-center gap-2"
+                                        >
+                                          <div className="flex flex-row gap-2 items-center w-full">
+                                            <SwitchWithText
+                                              checked={opcao.ativo}
+                                              onCheckedChange={(checked) =>
+                                                handleOpcaoChange(
                                                   adicionalIndex,
-                                                  opcaoIndex
-                                                );
-                                              }}
-                                              title="Excluir opção"
-                                            >
-                                              <Trash2 className="h-3 w-3 text-red-500" />
-                                            </Button>
+                                                  opcaoIndex,
+                                                  "ativo",
+                                                  checked
+                                                )
+                                              }
+                                              uncheckText="Não"
+                                              checkText="Sim"
+                                            />
+                                            <Input
+                                              value={opcao.codIntegra || ""}
+                                              onChange={(e) =>
+                                                handleOpcaoChange(
+                                                  adicionalIndex,
+                                                  opcaoIndex,
+                                                  "codIntegra",
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Codigo"
+                                              className="w-32 text-sm"
+                                              disabled={opcao.isImported}
+                                            />
+                                            <Input
+                                              value={opcao.nome}
+                                              onChange={(e) =>
+                                                handleOpcaoChange(
+                                                  adicionalIndex,
+                                                  opcaoIndex,
+                                                  "nome",
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Ex: Bem passada"
+                                              className="w-full text-sm sm:col-span-2"
+                                            />
+                                            <div className="flex items-center gap-1">
+                                              <div className="relative flex-1">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                                  R$
+                                                </span>
+                                                <Input
+                                                  value={String(opcao.preco)}
+                                                  onChange={(e) =>
+                                                    handleOpcaoChange(
+                                                      adicionalIndex,
+                                                      opcaoIndex,
+                                                      "preco",
+                                                      e.target.value
+                                                    )
+                                                  }
+                                                  placeholder="0,00"
+                                                  className="pl-6 text-sm"
+                                                />
+                                              </div>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8 border-red-200 hover:bg-red-100 hover:text-red-600"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleRemoveOpcao(
+                                                    adicionalIndex,
+                                                    opcaoIndex
+                                                  );
+                                                }}
+                                                title="Excluir opção"
+                                              >
+                                                <Trash2 className="h-3 w-3 text-red-500" />
+                                              </Button>
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    )
-                                )}
+                                      )
+                                  )}
+                                </div>
+                                <FormDescription>
+                                  Adicione as opções disponíveis para este
+                                  adicional.
+                                </FormDescription>
                               </div>
-                              <FormDescription>
-                                Adicione as opções disponíveis para este
-                                adicional.
-                              </FormDescription>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </SortableAdicionalItem>
-                ))}
+                        )}
+                      </div>
+                    </SortableAdicionalItem>
+                  );
+                })}
               </SortableContext>
             </DndContext>
           </div>

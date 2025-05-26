@@ -119,7 +119,6 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       if (error.response) {
-        console.log(error.response.data);
         const errorMessage =
           error.response.data?.message ||
           error.response.data?.error ||
