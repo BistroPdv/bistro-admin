@@ -49,8 +49,8 @@ export default function OrdersPage() {
       return response.data;
     },
     getNextPageParam: (lastPage) => {
-      if (lastPage.meta.currentPage < lastPage.meta.lastPage) {
-        return lastPage.meta.currentPage + 1;
+      if (lastPage.page < lastPage.totalPage) {
+        return lastPage.page + 1;
       }
       return undefined;
     },
