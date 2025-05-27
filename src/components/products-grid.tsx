@@ -26,6 +26,7 @@ import { SortableProductCard } from "./sortable-product-card";
 import { SortableProductListItem } from "./sortable-product-list-item";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface ProductsGridProps {
   loading?: boolean;
@@ -176,19 +177,34 @@ export function ProductsGrid({
                       {category.produtos?.length} produtos
                     </span>
                   </div>
-                  <Button
-                    variant={
-                      editingCategoryId === category.id ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => toggleCategoryOrder(category.id)}
-                    className="flex items-center gap-2"
-                  >
-                    <RiDragMove2Line className="h-4 w-4" />
-                    {editingCategoryId === category.id
-                      ? "Finalizar Ordenação"
-                      : "Ordenar Produtos"}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild color="black">
+                      <Button
+                        variant={
+                          editingCategoryId === category.id
+                            ? "default"
+                            : "outline"
+                        }
+                        size="sm"
+                        onClick={() => toggleCategoryOrder(category.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <RiDragMove2Line className="h-4 w-4" />
+                        <span className="hidden lg:block">
+                          {editingCategoryId === category.id
+                            ? "Finalizar Ordenação"
+                            : "Ordenar Produtos"}
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {editingCategoryId === category.id
+                          ? "Finalizar Ordenação"
+                          : "Ordenar Produtos"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 <SortableContext
