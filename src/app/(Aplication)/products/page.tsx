@@ -50,7 +50,7 @@ export default function Page() {
   } = useQuery<AxiosResponse, Error, PaginatedResult<Category>>({
     queryKey: ["products"],
     queryFn: () => {
-      const response = api.get(`/categorias`);
+      const response = api.get(`/categorias?status=true`);
       return response;
     },
     select: (resp) => resp.data,
