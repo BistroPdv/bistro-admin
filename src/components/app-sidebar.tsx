@@ -18,6 +18,7 @@ import { authService } from "@/lib/auth";
 import {
   RiArtboard2Line,
   RiDashboard2Line,
+  RiIdCardLine,
   RiLogoutBoxLine,
   RiPriceTag3Line,
   RiPrinterLine,
@@ -65,24 +66,30 @@ const data = {
         },
         {
           id: "p13",
+          title: "Formas de pagamento",
+          url: "/payment-method",
+          icon: RiIdCardLine,
+        },
+        {
+          id: "p14",
           title: "Produtos",
           url: "/products",
           icon: RiPriceTag3Line,
         },
         {
-          id: "p14",
+          id: "p15",
           title: "Mesas",
           url: "/tables",
           icon: RiArtboard2Line,
         },
         {
-          id: "p15",
+          id: "p16",
           title: "Impressoras",
           url: "/printers",
           icon: RiPrinterLine,
         },
         {
-          id: "p16",
+          id: "p17",
           title: "Pedidos",
           url: "/orders",
           icon: RiShoppingBasketLine,
