@@ -16,7 +16,6 @@ import {
 } from "@/schemas/payment-method-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  RiCalendarLine,
   RiMoneyDollarCircleLine,
   RiPercentLine,
   RiSecurePaymentLine,
@@ -40,17 +39,18 @@ export function PaymentMethodFormModal({
   const form = useForm<PaymentMethodType>({
     resolver: zodResolver(paymentMethodFormSchema),
     defaultValues: editingPaymentMethod || {
-      nome: "",
-      descricao: "",
-      tipo: undefined,
-      ativo: true,
-      aceitaTroco: false,
-      percentualTaxa: "",
-      diasParaRecebimento: "",
+      name: "",
+      description: "",
+      type: undefined,
+      status: true,
+      change: false,
+      taxa: "0",
     },
   });
 
   const handleSubmit = (values: PaymentMethodType) => {
+    // @ts-ignore
+    values.taxa = Number(values.taxa);
     onSubmit(values);
   };
 
@@ -59,24 +59,23 @@ export function PaymentMethodFormModal({
       form.reset(editingPaymentMethod);
     } else {
       form.reset({
-        nome: "",
-        descricao: "",
-        tipo: undefined,
-        ativo: true,
-        aceitaTroco: false,
-        percentualTaxa: "",
-        diasParaRecebimento: "",
+        name: "",
+        description: "",
+        type: "DINHEIRO",
+        status: true,
+        change: false,
+        taxa: "0",
       });
     }
   }, [editingPaymentMethod, form]);
 
   const paymentTypeOptions = [
     { value: "DINHEIRO", label: "Dinheiro" },
-    { value: "CARTAO_CREDITO", label: "Cartão de Crédito" },
-    { value: "CARTAO_DEBITO", label: "Cartão de Débito" },
+    { value: "CARTAO", label: "Cartão" },
     { value: "PIX", label: "PIX" },
-    { value: "TRANSFERENCIA", label: "Transferência Bancária" },
-    { value: "OUTRO", label: "Outro" },
+    { value: "TICKET", label: "Ticket" },
+    { value: "VOUCHER", label: "Voucher" },
+    { value: "OUTROS", label: "Outros" },
   ];
 
   return (
@@ -98,7 +97,7 @@ export function PaymentMethodFormModal({
             <div className="grid gap-4">
               <FormField
                 control={form.control}
-                name="nome"
+                name="name"
                 label="Nome"
                 icon={<RiMoneyDollarCircleLine className="h-4 w-4" />}
                 placeholder="Ex: Dinheiro, Cartão de Crédito..."
@@ -107,7 +106,7 @@ export function PaymentMethodFormModal({
 
               <FormField
                 control={form.control}
-                name="tipo"
+                name="type"
                 label="Tipo"
                 icon={<RiSettings3Line className="h-4 w-4" />}
                 type="select"
@@ -117,7 +116,7 @@ export function PaymentMethodFormModal({
 
               <FormField
                 control={form.control}
-                name="descricao"
+                name="description"
                 label="Descrição (Opcional)"
                 icon={<RiTextWrap className="h-4 w-4" />}
                 placeholder="Descrição adicional sobre a forma de pagamento"
@@ -127,37 +126,28 @@ export function PaymentMethodFormModal({
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="percentualTaxa"
+                  name="taxa"
                   label="Taxa (%)"
                   icon={<RiPercentLine className="h-4 w-4" />}
                   placeholder="0.00"
-                  type="number"
-                />
-
-                <FormField
-                  control={form.control}
-                  name="diasParaRecebimento"
-                  label="Dias p/ Recebimento"
-                  icon={<RiCalendarLine className="h-4 w-4" />}
-                  placeholder="0"
                   type="number"
                 />
               </div>
 
               <FormField
                 control={form.control}
-                name="aceitaTroco"
-                label="Aceita Troco"
+                name="change"
+                label=""
                 type="checkbox"
-                description="Marque se esta forma de pagamento aceita troco"
+                description="Aceita troco"
               />
 
               <FormField
                 control={form.control}
-                name="ativo"
-                label="Ativo"
+                name="status"
+                label=""
                 type="checkbox"
-                description="Marque para manter esta forma de pagamento ativa"
+                description="Ativo?"
               />
             </div>
 

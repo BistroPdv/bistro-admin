@@ -18,10 +18,10 @@ import { authService } from "@/lib/auth";
 import {
   RiArtboard2Line,
   RiDashboard2Line,
-  RiIdCardLine,
   RiLogoutBoxLine,
   RiPriceTag3Line,
   RiPrinterLine,
+  RiSecurePaymentLine,
   RiSettings3Line,
   RiShoppingBasketLine,
   RiUserFollowLine,
@@ -48,7 +48,7 @@ const data = {
   navMain: [
     {
       id: "p1",
-      title: "Seções",
+      title: "Restaurante",
       url: "#",
       items: [
         {
@@ -57,19 +57,7 @@ const data = {
           url: "/dashboard",
           icon: RiDashboard2Line,
         },
-        {
-          id: "p12",
-          title: "Usuários",
-          url: "/users",
-          icon: RiUserFollowLine,
-          isActive: true,
-        },
-        {
-          id: "p13",
-          title: "Formas de pagamento",
-          url: "/payment-method",
-          icon: RiIdCardLine,
-        },
+
         {
           id: "p14",
           title: "Produtos",
@@ -98,11 +86,24 @@ const data = {
     },
     {
       id: "p2",
-      title: "Outros",
+      title: "Sistema",
       url: "#",
       items: [
         {
           id: "p21",
+          title: "Usuários",
+          url: "/users",
+          icon: RiUserFollowLine,
+          isActive: true,
+        },
+        {
+          id: "p22",
+          title: "Formas de pagamento",
+          url: "/payment-method",
+          icon: RiSecurePaymentLine,
+        },
+        {
+          id: "p23",
           title: "Configurações",
           url: "/settings",
           icon: RiSettings3Line,
