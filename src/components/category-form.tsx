@@ -514,10 +514,9 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
             {Object.entries(form.formState.errors).map(([key, value]) => {
               if (key === "adicionais" && Array.isArray(value)) {
                 return value.map((error, index) => (
-                  <p
-                    key={index}
-                    className="text-sm text-destructive"
-                  >{`${error.titulo.message}`}</p>
+                  <p key={index} className="text-sm text-destructive">{`${
+                    error?.titulo?.message || error?.message
+                  }`}</p>
                 ));
               }
               return null;
