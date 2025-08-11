@@ -40,37 +40,37 @@ export function OrderList({
               <>
                 {orders.map((order) => (
                   <div
-                    key={order.id}
+                    key={order?.id}
                     className={`p-3 rounded-md cursor-pointer transition-colors select-none relative ${
-                      selectedOrder?.id === order.id
+                      selectedOrder?.id === order?.id
                         ? "bg-muted border-2 border-primary shadow-sm dark:bg-muted/80 dark:border-primary/70 dark:shadow-primary/20"
                         : "hover:bg-muted/50 border border-transparent"
                     }`}
                     onClick={() => onSelectOrder(order)}
                   >
-                    {selectedOrder?.id === order.id && (
+                    {selectedOrder?.id === order?.id && (
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
                     )}
                     <div className="flex justify-between items-center">
-                      <div className="font-medium">{order.pdvCodPedido}</div>
+                      <div className="font-medium">{order?.pdvCodPedido}</div>
                       <div className="text-sm text-muted-foreground">
-                        Mesa {order.mesa.numero}
+                        Mesa {order?.mesa?.numero}
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <div className="flex items-center gap-2">
                         <div
                           className={`w-3 h-3 rounded-full ${getStatusColor(
-                            order.status
+                            order?.status
                           )}`}
                         />
                         <span className="text-xs">
-                          {getStatusText(order.status)}
+                          {getStatusText(order?.status)}
                         </span>
                       </div>
                       <div className="font-medium min-w-[90px] text-right">
                         {formatCurrency(
-                          order.produtos.reduce((total, produto) => {
+                          order?.produtos?.reduce((total, produto) => {
                             const produtoTotal =
                               produto.produto.preco * produto.quantidade;
                             const adicionaisTotal =

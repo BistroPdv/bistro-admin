@@ -138,7 +138,7 @@ export function OrderDetails({
               </div>
               <div>
                 <CardTitle className="text-lg">
-                  {order.pdvCodPedido} - Mesa {order.mesa.numero}
+                  {order.pdvCodPedido} - Mesa {order?.mesa?.numero}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   Criado em {formatDate(order.createdAt)}
