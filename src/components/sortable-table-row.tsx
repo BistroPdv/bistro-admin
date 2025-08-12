@@ -104,12 +104,12 @@ export function SortableTableRow({
       <TableCell>
         <div className="flex items-center space-x-2">
           <Checkbox
-            checked={paymentMethod.channel}
+            checked={paymentMethod?.change}
             disabled
             className="pointer-events-none"
           />
           <span className="text-sm">
-            {paymentMethod.channel ? "Sim" : "Não"}
+            {paymentMethod?.change ? "Sim" : "Não"}
           </span>
         </div>
       </TableCell>
