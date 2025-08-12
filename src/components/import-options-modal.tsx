@@ -46,7 +46,7 @@ export function ImportOptionsModal({
             limit: 1000,
           },
         }),
-      select: (data) => data.pages[data.pages.length - 1].data,
+      select: (data) => data.pages[data.pages.length - 1].data.data,
       getNextPageParam: (lastPage) => {
         const currentPage = lastPage.data.page || 1;
         const totalPages = Math.ceil(lastPage.data.total / 1000);
