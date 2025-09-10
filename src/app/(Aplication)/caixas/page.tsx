@@ -103,11 +103,11 @@ export default function CaixasPage() {
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-4 bg-muted/30 rounded-lg border">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3 justify-between">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <DollarSign className="h-4 w-4 text-primary" />
               </div>
-              <div>
+              <div className="w-full">
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Total de Caixas
                 </h3>
@@ -115,18 +115,18 @@ export default function CaixasPage() {
                   Registrados no sistema
                 </p>
               </div>
-            </div>
-            <div className="text-2xl font-semibold text-foreground">
-              {totalCaixas}
+              <div className="text-2xl font-semibold text-foreground">
+                {totalCaixas}
+              </div>
             </div>
           </Card>
 
           <Card className="p-4 bg-muted/30 rounded-lg border">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-between gap-3 mb-3">
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                 <Activity className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
-              <div>
+              <div className="w-full">
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Caixas Abertos
                 </h3>
@@ -134,35 +134,35 @@ export default function CaixasPage() {
                   Ativos no momento
                 </p>
               </div>
-            </div>
-            <div className="text-2xl font-semibold text-green-600">
-              {caixasAbertos}
+              <div className="text-2xl font-semibold text-green-600">
+                {caixasAbertos}
+              </div>
             </div>
           </Card>
 
           <Card className="p-4 bg-muted/30 rounded-lg border">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3 justify-between">
               <div className="p-2 bg-slate-100 dark:bg-slate-900/20 rounded-lg">
                 <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </div>
-              <div>
+              <div className="w-full">
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Caixas Fechados
                 </h3>
                 <p className="text-xs text-muted-foreground">Finalizados</p>
               </div>
-            </div>
-            <div className="text-2xl font-semibold text-slate-600 dark:text-slate-400">
-              {caixasFechados}
+              <div className="text-2xl font-semibold text-slate-600 dark:text-slate-400">
+                {caixasFechados}
+              </div>
             </div>
           </Card>
 
           <Card className="p-4 bg-muted/30 rounded-lg border">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3 justify-between">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
                 <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
+              <div className="w-full">
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Movimentação Total
                 </h3>
@@ -170,9 +170,9 @@ export default function CaixasPage() {
                   Soma de todos os caixas
                 </p>
               </div>
-            </div>
-            <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-              {formatCurrency(totalMovimentacoes)}
+              <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                {formatCurrency(totalMovimentacoes)}
+              </div>
             </div>
           </Card>
         </div>
