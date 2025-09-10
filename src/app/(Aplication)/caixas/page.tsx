@@ -3,10 +3,18 @@
 import { Caixa, CaixaListResponse } from "@/@types/caixas";
 import CaixaDetailsModal from "@/components/caixa-details-modal";
 import CaixasTable from "@/components/caixas-table";
+import { TitlePage } from "@/components/title-page";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { DollarSign, RefreshCw } from "lucide-react";
+import {
+  Activity,
+  Clock,
+  DollarSign,
+  RefreshCw,
+  TrendingUp,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -47,108 +55,166 @@ export default function CaixasPage() {
     refetch();
   };
 
+  const getTotalMovimentacoes = (movimentacoes: any[]) => {
+    return movimentacoes.reduce((total, mov) => {
+      return mov.tipo === "ABERTURA" || mov.tipo === "ENTRADA"
+        ? total + mov.valor
+        : total - mov.valor;
+    }, 0);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   if (error) {
     toast.error("Erro ao carregar caixas");
   }
 
+  const totalCaixas = caixasData?.total || 0;
+  const caixasAbertos = caixasData?.data.filter((c) => c.status).length || 0;
+  const caixasFechados = caixasData?.data.filter((c) => !c.status).length || 0;
+  const totalMovimentacoes =
+    caixasData?.data.reduce((total, caixa) => {
+      return total + getTotalMovimentacoes(caixa.CaixaMovimentacao);
+    }, 0) || 0;
+
   return (
-    <div className="container space-y-6">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <DollarSign className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Caixas</h1>
-            <p className="text-muted-foreground">
-              Gerencie e visualize os caixas do sistema
-            </p>
-          </div>
-        </div>
-        <Button onClick={handleRefresh} variant="outline" className="gap-2">
+      <TitlePage
+        title="Caixas"
+        description="Gerencie e monitore os caixas do sistema"
+        icon={<DollarSign className="h-8 w-8" />}
+      >
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          className="gap-2 h-11 px-6"
+        >
           <RefreshCw className="h-4 w-4" />
           Atualizar
         </Button>
+      </TitlePage>
+      <div className="flex-none space-y-6 pb-6">
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-4 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <DollarSign className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Total de Caixas
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Registrados no sistema
+                </p>
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-foreground">
+              {totalCaixas}
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <Activity className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Caixas Abertos
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Ativos no momento
+                </p>
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-green-600">
+              {caixasAbertos}
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 dark:bg-slate-900/20 rounded-lg">
+                <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Caixas Fechados
+                </h3>
+                <p className="text-xs text-muted-foreground">Finalizados</p>
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-slate-600 dark:text-slate-400">
+              {caixasFechados}
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Movimentação Total
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Soma de todos os caixas
+                </p>
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+              {formatCurrency(totalMovimentacoes)}
+            </div>
+          </Card>
+        </div>
       </div>
 
-      {/* Estatísticas Rápidas */}
-      {caixasData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-card border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total de Caixas
-                </p>
-                <p className="text-2xl font-bold">{caixasData.total}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Caixas Abertos
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {caixasData.data.filter((c) => c.status).length}
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Caixas Fechados
-                </p>
-                <p className="text-2xl font-bold text-muted-foreground">
-                  {caixasData.data.filter((c) => !c.status).length}
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <div className="h-3 w-3 bg-gray-400 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tabela de Caixas */}
-      <CaixasTable
-        caixas={caixasData?.data || []}
-        loading={isLoading}
-        onViewCaixa={handleViewCaixa}
-      />
+      <div className="flex-1 overflow-hidden">
+        <CaixasTable
+          caixas={caixasData?.data || []}
+          loading={isLoading}
+          onViewCaixa={handleViewCaixa}
+        />
+      </div>
 
       {/* Paginação */}
       {caixasData && caixasData.totalPage > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {caixasData.data.length} de {caixasData.total} caixas
-          </p>
+        <div className="flex-none flex items-center justify-between pt-4 border-t bg-muted/30 px-4 py-3 rounded-lg">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {caixasData.data.length} de {caixasData.total} caixas
+            </span>
+            <span className="text-sm text-muted-foreground">•</span>
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {caixasData.totalPage}
+            </span>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
+              className="h-8 px-3"
             >
               Anterior
             </Button>
-            <span className="flex items-center px-3 py-2 text-sm">
-              Página {page} de {caixasData.totalPage}
-            </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
               disabled={page === caixasData.totalPage}
+              className="h-8 px-3"
             >
               Próxima
             </Button>

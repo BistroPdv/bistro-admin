@@ -68,100 +68,97 @@ export default function CaixasTable(props: CaixasTableProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <DollarSign className="h-5 w-5 text-primary" />
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle className="flex items-center gap-3 text-lg">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <DollarSign className="h-4 w-4 text-primary" />
+          </div>
           Lista de Caixas
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Visualize e gerencie todos os caixas do sistema
         </p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-b">
-                <TableHead className="w-[12%] font-semibold">Status</TableHead>
-                <TableHead className="w-[18%] font-semibold">Usuário</TableHead>
-                <TableHead className="w-[18%] font-semibold">
-                  Data Abertura
-                </TableHead>
-                <TableHead className="w-[15%] font-semibold">
-                  Movimentações
-                </TableHead>
-                <TableHead className="w-[20%] font-semibold">
-                  Saldo Atual
-                </TableHead>
-                <TableHead className="w-[17%] font-semibold text-center">
-                  Ações
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {caixas.map((caixa) => {
-                const totalMovimentacoes = getTotalMovimentacoes(
-                  caixa.CaixaMovimentacao
-                );
+          <div style={{ maxHeight: 400, overflowY: "auto" }}>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b bg-muted/20">
+                  <TableHead className="w-[12%] font-semibold text-sm py-4">
+                    Status
+                  </TableHead>
+                  <TableHead className="w-[18%] font-semibold text-sm py-4">
+                    Usuário
+                  </TableHead>
+                  <TableHead className="w-[18%] font-semibold text-sm py-4">
+                    Data Abertura
+                  </TableHead>
+                  <TableHead className="w-[15%] font-semibold text-sm py-4">
+                    Movimentações
+                  </TableHead>
+                  <TableHead className="w-[20%] font-semibold text-sm py-4">
+                    Saldo Atual
+                  </TableHead>
+                  <TableHead className="w-[17%] font-semibold text-center text-sm py-4">
+                    Ações
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {caixas.map((caixa, index) => {
+                  const totalMovimentacoes = getTotalMovimentacoes(
+                    caixa.CaixaMovimentacao
+                  );
 
-                return (
-                  <TableRow
-                    key={caixa.id}
-                    className="hover:bg-muted/50 transition-colors"
-                  >
-                    <TableCell>
-                      <div className="flex items-center">
+                  return (
+                    <TableRow
+                      key={caixa.id}
+                      className="hover:bg-muted/30 transition-colors border-b"
+                    >
+                      <TableCell className="py-4">
                         {getStatusBadge(caixa.status)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="p-1 bg-muted rounded-full">
-                          <User className="h-3 w-3 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">
-                          {caixa.user.nome || "Usuário não informado"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="p-1 bg-muted rounded-full">
-                          <Calendar className="h-3 w-3 text-muted-foreground" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {dayjs(caixa.createdAt)
-                              .locale("pt-br")
-                              .format("DD/MM/YYYY")}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {dayjs(caixa.createdAt)
-                              .locale("pt-br")
-                              .format("HH:mm")}
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">
+                            {caixa.user.nome || "Usuário não informado"}
                           </span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {dayjs(caixa.createdAt)
+                                .locale("pt-br")
+                                .format("DD/MM/YYYY")}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {dayjs(caixa.createdAt)
+                                .locale("pt-br")
+                                .format("HH:mm")}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
                             {caixa.CaixaMovimentacao.length}
                           </span>
+                          <span className="text-xs text-muted-foreground">
+                            movimentações
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          movimentação(ões)
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4 text-green-600" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
                           <span
-                            className={`font-bold text-lg ${
+                            className={`font-semibold text-sm ${
                               totalMovimentacoes >= 0
                                 ? "text-green-600"
                                 : "text-red-600"
@@ -170,24 +167,24 @@ export default function CaixasTable(props: CaixasTableProps) {
                             {formatCurrency(totalMovimentacoes)}
                           </span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewCaixa && onViewCaixa(caixa)}
-                        className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Ver Detalhes
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell className="text-center py-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewCaixa && onViewCaixa(caixa)}
+                          className="h-8 px-3"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
     </Card>
