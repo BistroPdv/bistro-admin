@@ -48,7 +48,15 @@ export default function CaixaDetailsModal({
   };
 
   const getTotalMovimentacoes = (movimentacoes: any[]) => {
-    return movimentacoes.reduce((total, mov) => total + mov.valor, 0);
+    return movimentacoes.reduce((total, mov) => {
+      // ABERTURA e ENTRADA são positivas, SAIDA e SANGRIA são negativas
+      if (mov.tipo === "ABERTURA" || mov.tipo === "ENTRADA") {
+        return total + mov.valor;
+      } else if (mov.tipo === "SAIDA" || mov.tipo === "SANGRIA") {
+        return total - mov.valor;
+      }
+      return total;
+    }, 0);
   };
 
   const getStatusBadge = (status: boolean) => {
@@ -204,14 +212,15 @@ export default function CaixaDetailsModal({
                 <div className="text-xl font-semibold">
                   {formatCurrency(
                     caixa.CaixaMovimentacao.filter(
-                      (mov) => mov.valor > 0
+                      (mov) => mov.tipo === "ABERTURA" || mov.tipo === "ENTRADA"
                     ).reduce((total, mov) => total + mov.valor, 0)
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {
-                    caixa.CaixaMovimentacao.filter((mov) => mov.valor > 0)
-                      .length
+                    caixa.CaixaMovimentacao.filter(
+                      (mov) => mov.tipo === "ABERTURA" || mov.tipo === "ENTRADA"
+                    ).length
                   }{" "}
                   transações
                 </p>
@@ -226,17 +235,16 @@ export default function CaixaDetailsModal({
                 </div>
                 <div className="text-xl font-semibold">
                   {formatCurrency(
-                    Math.abs(
-                      caixa.CaixaMovimentacao.filter(
-                        (mov) => mov.valor < 0
-                      ).reduce((total, mov) => total + mov.valor, 0)
-                    )
+                    caixa.CaixaMovimentacao.filter(
+                      (mov) => mov.tipo === "SAIDA" || mov.tipo === "SANGRIA"
+                    ).reduce((total, mov) => total + mov.valor, 0)
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {
-                    caixa.CaixaMovimentacao.filter((mov) => mov.valor < 0)
-                      .length
+                    caixa.CaixaMovimentacao.filter(
+                      (mov) => mov.tipo === "SAIDA" || mov.tipo === "SANGRIA"
+                    ).length
                   }{" "}
                   transações
                 </p>
@@ -473,8 +481,8 @@ export default function CaixaDetailsModal({
                                 <h5 className="font-semibold text-foreground">
                                   {metodo.nome}
                                 </h5>
-                                <p className="text-sm text-muted-foreground">
-                                  {metodo.tipo}
+                                <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                  {metodo.descricao}
                                 </p>
                               </div>
                             </div>

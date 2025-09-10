@@ -14,11 +14,14 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Role } from "@/hooks/use-permissions";
 import { authService } from "@/lib/auth";
+import { hasMenuPermission } from "@/lib/permissions";
 import {
   RiArtboard2Line,
   RiDashboard2Line,
   RiLogoutBoxLine,
+  RiMoneyDollarCircleLine,
   RiPriceTag3Line,
   RiPrinterLine,
   RiSecurePaymentLine,
@@ -56,31 +59,35 @@ const data = {
           title: "Dashboard",
           url: "/dashboard",
           icon: RiDashboard2Line,
+          permission: "dashboard" as const,
         },
-
         {
           id: "p14",
           title: "Produtos",
           url: "/products",
           icon: RiPriceTag3Line,
+          permission: "products" as const,
         },
         {
           id: "p15",
           title: "Mesas",
           url: "/tables",
           icon: RiArtboard2Line,
+          permission: "tables" as const,
         },
         {
           id: "p16",
           title: "Impressoras",
           url: "/printers",
           icon: RiPrinterLine,
+          permission: "printers" as const,
         },
         {
           id: "p17",
           title: "Pedidos",
           url: "/orders",
           icon: RiShoppingBasketLine,
+          permission: "orders" as const,
         },
       ],
     },
@@ -94,19 +101,28 @@ const data = {
           title: "Usuários",
           url: "/users",
           icon: RiUserFollowLine,
-          isActive: true,
+          permission: "users" as const,
         },
         {
           id: "p22",
           title: "Formas de pagamento",
           url: "/payment-method",
           icon: RiSecurePaymentLine,
+          permission: "paymentMethod" as const,
         },
         {
           id: "p23",
           title: "Configurações",
           url: "/settings",
           icon: RiSettings3Line,
+          permission: "settings" as const,
+        },
+        {
+          id: "p24",
+          title: "Caixas",
+          url: "/caixas",
+          icon: RiMoneyDollarCircleLine,
+          permission: "caixas" as const,
         },
       ],
     },
@@ -146,38 +162,55 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SearchForm className="mt-3" />
       </SidebarHeader>
       <SidebarContent>
-        {data.navMain.map((group) => (
-          <SidebarGroup key={group.id}>
-            <SidebarGroupLabel className="uppercase text-muted-foreground/60">
-              {group.title}
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="px-2">
-              <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
-                      isActive={activeItem === item.title}
-                      onClick={() => setActiveItem(item.title)}
-                    >
-                      <Link href={item.url}>
-                        {item.icon && (
-                          <item.icon
-                            className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
-                            size={22}
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {data.navMain.map((group) => {
+          const user = authService.getUser();
+          const userRole = user.role as Role;
+
+          // Filtrar itens do menu baseado nas permissões
+          const accessibleItems = group.items.filter((item) =>
+            item.permission
+              ? hasMenuPermission(userRole, item.permission)
+              : true
+          );
+
+          // Se não há itens acessíveis no grupo, não renderizar o grupo
+          if (accessibleItems.length === 0) {
+            return null;
+          }
+
+          return (
+            <SidebarGroup key={group.id}>
+              <SidebarGroupLabel className="uppercase text-muted-foreground/60">
+                {group.title}
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="px-2">
+                <SidebarMenu>
+                  {accessibleItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        asChild
+                        className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+                        isActive={activeItem === item.title}
+                        onClick={() => setActiveItem(item.title)}
+                      >
+                        <Link href={item.url}>
+                          {item.icon && (
+                            <item.icon
+                              className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
+                              size={22}
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
       <SidebarFooter>
         <hr className="border-t border-border mx-2 -mt-px" />

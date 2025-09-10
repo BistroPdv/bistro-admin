@@ -61,6 +61,11 @@ export const authService = {
       // Armazena o token no localStorage
       localStorage.setItem("token", response.data.token);
 
+      // Armazena o token em cookie para o middleware acessar
+      document.cookie = `token=${response.data.token}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; SameSite=Strict`;
+
       // Armazena informações básicas do usuário
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
@@ -132,6 +137,11 @@ export const authService = {
   logout(): void {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("settings");
+
+    // Remove o cookie do token
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
     // Redireciona para a página de login
     window.location.href = "/";
   },

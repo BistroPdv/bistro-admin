@@ -74,6 +74,7 @@ interface MetodosPagamento {
   nome: string;
   tipo: string;
   valorInformado: number;
+  descricao: string;
   valorReal: number;
   diferenca: number;
 }
