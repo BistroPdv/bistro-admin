@@ -56,6 +56,7 @@ export interface PropsSetting {
   printerNotification: string;
   printerBill: string;
   adminPassword: string; // Added field for admin password
+  typeService: "TABLE" | "TABLE_COMMANDED" | "COMMANDED"; // Added field for type service
 }
 
 interface Banner {
@@ -78,6 +79,9 @@ const formSchema = z.object({
   omieSecretKey: z.string().optional(),
   printerNotification: z.string().optional(),
   printerBill: z.string().optional(),
+  typeService: z.enum(["TABLE", "TABLE_COMMANDED", "COMMANDED"], {
+    required_error: "Por favor, selecione o tipo de serviço",
+  }),
   adminPassword: z
     .string()
     .min(1, { message: "Senha Administrativa é obrigatória" }), // Added validation for admin password
@@ -92,7 +96,7 @@ export function CompanySettingsForm() {
   const [bannerPreviews, setBannerPreviews] = useState<
     { id: string; url: string; nome: string }[]
   >([]);
-  const [integrationType, setIntegrationType] = useState<string>("omie");
+  const [integrationType, setIntegrationType] = useState<string>("OMIE");
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(true);
 
@@ -138,6 +142,7 @@ export function CompanySettingsForm() {
       omieAppKey: "",
       omieSecretKey: "",
       printerNotification: "",
+      typeService: "TABLE",
       printerBill: "",
       adminPassword: "", // Default value for admin password
     },
@@ -145,6 +150,7 @@ export function CompanySettingsForm() {
 
   // Estado para controlar se os dados iniciais já foram carregados
   const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
+  const [isFormReady, setIsFormReady] = useState(false);
 
   const handleLogoUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,51 +247,91 @@ export function CompanySettingsForm() {
     }
   };
 
+  // Função para carregar dados da API no formulário
+  const loadFormData = useCallback(() => {
+    if (!configEnterprise.data?.data || isInitialDataLoaded) {
+      return;
+    }
+
+    const apiData = configEnterprise.data.data;
+
+    try {
+      // Atualizar tipo de integração
+      const pdvIntegration = apiData.pdvIntegrations || "OMIE";
+      setIntegrationType(pdvIntegration);
+
+      // Resetar formulário com dados da API
+      const formData = {
+        name: apiData.name || "",
+        email: apiData.email || "",
+        phone: apiData.phone || "",
+        pdvIntegrations: pdvIntegration,
+        printerNotification: apiData.printerNotification || "",
+        printerBill: apiData.printerBill || "",
+        omieAppKey: apiData.integrationOmie?.omie_key || "",
+        omieSecretKey: apiData.integrationOmie?.omie_secret || "",
+        adminPassword: apiData.adminPassword || "",
+        typeService: apiData.typeService || "TABLE",
+      };
+
+      console.log("📝 Dados do formulário:", formData);
+      form.reset(formData);
+
+      // Atualizar previews de imagem
+      if (apiData.logo && logoPreview !== apiData.logo) {
+        setLogoPreview(apiData.logo);
+      }
+
+      if (apiData.Banner && apiData.Banner.length > 0) {
+        setBannerPreviews(apiData.Banner);
+      }
+
+      setIsInitialDataLoaded(true);
+      setIsFormReady(true);
+      console.log("✅ Formulário carregado com sucesso");
+    } catch (error) {
+      console.error("❌ Erro ao carregar dados do formulário:", error);
+    }
+  }, [configEnterprise.data, isInitialDataLoaded, form, logoPreview]);
+
+  // Effect para carregar dados quando a API estiver pronta
   useEffect(() => {
     if (
-      configEnterprise.isFetched &&
+      configEnterprise.isSuccess &&
       configEnterprise.data &&
       !isLoadingPrinters &&
       !isInitialDataLoaded
     ) {
-      const {
-        name,
-        email,
-        phone,
-        logo,
-        Banner,
-        pdvIntegrations,
-        integrationOmie,
-        printerNotification,
-        printerBill,
-        adminPassword, // Load admin password from API
-      } = configEnterprise.data.data;
-
-      // Primeiro, atualizamos o tipo de integração
-      setIntegrationType(pdvIntegrations);
-
-      // Depois, atualizamos os valores do formulário
-      form.reset({
-        name,
-        email,
-        phone,
-        pdvIntegrations,
-        printerNotification: printerNotification || "",
-        printerBill: printerBill || "",
-        omieAppKey: integrationOmie?.omie_key || "",
-        omieSecretKey: integrationOmie?.omie_secret || "",
-        adminPassword: adminPassword || "", // Set admin password in form
-      });
-
-      if (logoPreview !== logo) setLogoPreview(logo);
-
-      if (Banner.length > 0) {
-        setBannerPreviews(Banner);
-      }
-
-      setIsInitialDataLoaded(true);
+      loadFormData();
     }
-  }, [configEnterprise.data, configEnterprise.isFetched, isLoadingPrinters]);
+  }, [
+    configEnterprise.isSuccess,
+    configEnterprise.data,
+    isLoadingPrinters,
+    isInitialDataLoaded,
+    loadFormData,
+  ]);
+
+  // Effect para resetar o formulário quando necessário
+  useEffect(() => {
+    if (isFormReady && configEnterprise.data?.data) {
+      const apiData = configEnterprise.data.data;
+      const currentValues = form.getValues();
+
+      // Verificar se os dados mudaram e precisam ser atualizados
+      const needsUpdate =
+        currentValues.name !== (apiData.name || "") ||
+        currentValues.email !== (apiData.email || "") ||
+        currentValues.phone !== (apiData.phone || "") ||
+        currentValues.pdvIntegrations !== (apiData.pdvIntegrations || "OMIE") ||
+        currentValues.typeService !== (apiData.typeService || "TABLE");
+
+      if (needsUpdate) {
+        console.log("🔄 Atualizando formulário com novos dados");
+        loadFormData();
+      }
+    }
+  }, [configEnterprise.data, isFormReady, form, loadFormData]);
 
   // Renderização dos selects
   const renderPrinterSelect = (
@@ -330,7 +376,7 @@ export function CompanySettingsForm() {
           <CardTitle className="text-2xl">Configurações da Empresa</CardTitle>
         </CardHeader>
         <CardContent>
-          {configEnterprise.isLoading ? (
+          {configEnterprise.isLoading || !isFormReady ? (
             <SettingsFormSkeleton />
           ) : (
             <Form {...form}>
@@ -393,6 +439,36 @@ export function CompanySettingsForm() {
                               type="tel"
                               maxLength={15}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="typeService"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Serviço</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo de serviço" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="TABLE">Mesa</SelectItem>
+                                <SelectItem value="TABLE_COMMANDED">
+                                  Mesa Comanda
+                                </SelectItem>
+                                <SelectItem value="COMMANDED">
+                                  Comanda
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

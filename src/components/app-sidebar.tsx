@@ -24,6 +24,7 @@ import {
   RiMoneyDollarCircleLine,
   RiPriceTag3Line,
   RiPrinterLine,
+  RiQrCodeFill,
   RiSecurePaymentLine,
   RiSettings3Line,
   RiShoppingBasketLine,
@@ -77,13 +78,20 @@ const data = {
         },
         {
           id: "p16",
+          title: "Comandas",
+          url: "/commands",
+          icon: RiQrCodeFill,
+          permission: "commands" as const,
+        },
+        {
+          id: "p17",
           title: "Impressoras",
           url: "/printers",
           icon: RiPrinterLine,
           permission: "printers" as const,
         },
         {
-          id: "p17",
+          id: "p18",
           title: "Pedidos",
           url: "/orders",
           icon: RiShoppingBasketLine,
@@ -169,7 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           // Filtrar itens do menu baseado nas permissões
           const accessibleItems = group.items.filter((item) =>
             item.permission
-              ? hasMenuPermission(userRole, item.permission)
+              ? hasMenuPermission(userRole, item?.permission)
               : true
           );
 

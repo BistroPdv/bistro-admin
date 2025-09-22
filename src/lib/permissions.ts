@@ -25,6 +25,7 @@ export const ROUTE_PERMISSIONS = {
 export const MENU_PERMISSIONS = {
   // Seção Restaurante
   dashboard: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
+  commands: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
   products: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
   tables: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
   orders: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
