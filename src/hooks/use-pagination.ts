@@ -62,13 +62,8 @@ export function usePagination<T = any>({
 
   // Calcular metadados de paginação
   // A API retorna: { total: 100, totalPage: 9, page: 1, limit: 12 }
-  const totalPages =
-    data?.totalPage ||
-    data?.meta?.lastPage ||
-    data?.lastPage ||
-    data?.totalPages ||
-    1;
-  const totalItems = data?.total || data?.meta?.total || data?.totalItems || 0;
+  const totalPages = data?.totalPage || data?.meta?.lastPage || 1;
+  const totalItems = data?.total || data?.meta?.total || 0;
   const hasNextPage = currentPage < totalPages;
   const hasPreviousPage = currentPage > 1;
 

@@ -432,6 +432,7 @@ export function CompanySettingsForm() {
                           <FormControl>
                             <Input
                               {...field}
+                              //@ts-ignore
                               ref={withMask("(99) 99999-9999", {
                                 showMaskOnHover: false,
                               })}

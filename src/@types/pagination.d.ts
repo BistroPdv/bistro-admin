@@ -7,5 +7,9 @@ interface PaginationMeta {
 
 export interface PaginatedResult<T> {
   data?: T[];
-  meta: PaginationMeta;
+  meta?: PaginationMeta;
+  total?: number;
+  totalPage?: number;
+  page?: number;
+  limit?: number;
 }

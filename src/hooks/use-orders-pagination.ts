@@ -36,7 +36,7 @@ export function useOrdersPagination({
   return usePagination<Order>({
     endpoint: "/pedidos",
     pageSize,
-    queryKey: ["orders", status, date, table],
+    queryKey: ["orders", status || "all", date || "", table || ""],
     additionalParams,
   });
 }
