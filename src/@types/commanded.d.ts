@@ -26,6 +26,7 @@ export interface CommandedPaginationResponse {
   data: Commanded[];
   meta: {
     total: number;
+    totalItems: number;
     currentPage: number;
     lastPage: number;
     perPage: number;
