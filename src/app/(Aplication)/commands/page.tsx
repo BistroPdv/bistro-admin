@@ -227,13 +227,13 @@ export default function Page() {
           }
         }}
       >
-        <DialogContent className="min-w-[21cm] overflow-auto max-h-[90vh] flex flex-wrap gap-4">
+        <DialogContent className="min-w-[21cm] overflow-auto max-h-[90vh] gap-4">
           <DialogHeader>
             <DialogTitle>Comandas</DialogTitle>
           </DialogHeader>
           <div
             ref={refExportPDF}
-            className="flex flex-wrap gap-4 overflow-auto max-h-[calc(90vh-10rem)]"
+            className="flex flex-wrap gap-4 overflow-auto items-center justify-center max-h-[calc(90vh-10rem)]"
           >
             {commandedData?.map((commanded) => (
               <Comanda

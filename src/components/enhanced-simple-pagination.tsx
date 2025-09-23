@@ -93,92 +93,94 @@ export function EnhancedSimplePagination({
         Mostrando {startItem} a {endItem} de {totalItems} itens
       </div>
 
-      {/* Controles de paginação - só mostra se não estiver no modo "Todos" */}
-      {pageSize !== -1 && (
-        <div className="flex items-center gap-2">
-          {/* Primeira página - só mostra se showFirstLast for true e não estiver na primeira página */}
-          {showFirstLast && hasPreviousPage && (
+      <div className="flex items-center gap-2">
+        {/* Controles de paginação - só mostra se não estiver no modo "Todos" */}
+        {pageSize !== -1 && (
+          <div className="flex items-center gap-2">
+            {/* Primeira página - só mostra se showFirstLast for true e não estiver na primeira página */}
+            {showFirstLast && hasPreviousPage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onFirst}
+                className="h-8 w-8 p-0"
+                aria-label="Primeira página"
+              >
+                <RiSkipBackLine className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Página anterior */}
             <Button
               variant="outline"
               size="sm"
-              onClick={onFirst}
-              className="h-8 w-8 p-0"
-              aria-label="Primeira página"
+              onClick={onPrevious}
+              disabled={!hasPreviousPage}
             >
-              <RiSkipBackLine className="h-4 w-4" />
+              Anterior
             </Button>
-          )}
 
-          {/* Página anterior */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPrevious}
-            disabled={!hasPreviousPage}
-          >
-            Anterior
-          </Button>
+            {/* Números das páginas com elipse */}
+            <div className="flex items-center gap-1">
+              {visiblePages.map((page, index) => (
+                <div key={index}>
+                  {page === "ellipsis-start" || page === "ellipsis-end" ? (
+                    <span className="px-2 text-muted-foreground">...</span>
+                  ) : (
+                    <Button
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => onPageChange(page as number)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
 
-          {/* Números das páginas com elipse */}
-          <div className="flex items-center gap-1">
-            {visiblePages.map((page, index) => (
-              <div key={index}>
-                {page === "ellipsis-start" || page === "ellipsis-end" ? (
-                  <span className="px-2 text-muted-foreground">...</span>
-                ) : (
-                  <Button
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onPageChange(page as number)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {page}
-                  </Button>
-                )}
-              </div>
-            ))}
+            {/* Próxima página */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNext}
+              disabled={!hasNextPage}
+            >
+              Próxima
+            </Button>
+
+            {/* Última página - só mostra se showFirstLast for true e não estiver na última página */}
+            {showFirstLast && hasNextPage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onLast}
+                className="h-8 w-8 p-0"
+                aria-label="Última página"
+              >
+                <RiSkipForwardLine className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+        )}
 
-          {/* Próxima página */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNext}
-            disabled={!hasNextPage}
-          >
-            Próxima
-          </Button>
-
-          {/* Última página - só mostra se showFirstLast for true e não estiver na última página */}
-          {showFirstLast && hasNextPage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onLast}
-              className="h-8 w-8 p-0"
-              aria-label="Última página"
-            >
-              <RiSkipForwardLine className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Seletor de tamanho da página */}
-      <GenericPageSizeSelector
-        label=""
-        options={[
-          { value: 10, label: "10" },
-          { value: 20, label: "20" },
-          { value: 30, label: "30" },
-          { value: 40, label: "40" },
-          { value: 50, label: "50" },
-          { value: -1, label: "Todos" },
-        ]}
-        pageSize={pageSize}
-        onPageSizeChange={(size) => onPageSizeChange?.(size)}
-        totalItems={totalItems}
-      />
+        {/* Seletor de tamanho da página */}
+        <GenericPageSizeSelector
+          label=""
+          options={[
+            { value: 10, label: "10" },
+            { value: 20, label: "20" },
+            { value: 30, label: "30" },
+            { value: 40, label: "40" },
+            { value: 50, label: "50" },
+            { value: -1, label: "Todos" },
+          ]}
+          pageSize={pageSize}
+          onPageSizeChange={(size) => onPageSizeChange?.(size)}
+          totalItems={totalItems}
+        />
+      </div>
     </div>
   );
 }
