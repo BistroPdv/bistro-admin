@@ -46,13 +46,18 @@ export function usePagination<T = any>({
   const { data, isLoading, error, refetch } = useQuery<PaginatedResult<T>>({
     queryKey: [...queryKey, currentPage, pageSize, additionalParams],
     queryFn: async () => {
-      const response = await api.get(endpoint, {
-        params: {
-          page: currentPage,
-          limit: pageSize,
-          ...additionalParams,
-        },
-      });
+      // Se pageSize for -1 (Todos), não enviar o parâmetro limit e sempre usar página 1
+      const params: any = {
+        page: pageSize === -1 ? 1 : currentPage,
+        ...additionalParams,
+      };
+
+      // Só adiciona limit se não for "Todos"
+      if (pageSize !== -1) {
+        params.limit = pageSize;
+      }
+
+      const response = await api.get(endpoint, { params });
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -62,10 +67,11 @@ export function usePagination<T = any>({
 
   // Calcular metadados de paginação
   // A API retorna: { total: 100, totalPage: 9, page: 1, limit: 12 }
-  const totalPages = data?.totalPage || data?.meta?.lastPage || 1;
+  const totalPages =
+    pageSize === -1 ? 1 : data?.totalPage || data?.meta?.lastPage || 1;
   const totalItems = data?.total || data?.meta?.total || 0;
-  const hasNextPage = currentPage < totalPages;
-  const hasPreviousPage = currentPage > 1;
+  const hasNextPage = pageSize === -1 ? false : currentPage < totalPages;
+  const hasPreviousPage = pageSize === -1 ? false : currentPage > 1;
 
   // Ações de paginação
   const goToPage = useCallback(
@@ -99,7 +105,12 @@ export function usePagination<T = any>({
 
   const changePageSize = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
-    setCurrentPage(1); // Reset to first page when changing page size
+    // Se mudar para "Todos" (pageSize = -1), sempre resetar para página 1
+    if (newPageSize === -1) {
+      setCurrentPage(1);
+    } else {
+      setCurrentPage(1); // Reset to first page when changing page size
+    }
   }, []);
 
   // Estado da paginação

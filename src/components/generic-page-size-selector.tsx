@@ -21,6 +21,7 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [
   { value: 24, label: "24 por página" },
   { value: 48, label: "48 por página" },
   { value: 96, label: "96 por página" },
+  { value: -1, label: "Todos" },
 ];
 
 export function GenericPageSizeSelector({
@@ -32,13 +33,20 @@ export function GenericPageSizeSelector({
 }: GenericPageSizeSelectorProps) {
   const currentOption = options.find((option) => option.value === pageSize);
 
+  const getDisplayLabel = () => {
+    if (pageSize === -1) {
+      return "Todos";
+    }
+    return currentOption?.label || `${pageSize} por página`;
+  };
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{label}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-8">
-            {currentOption?.label || `${pageSize} por página`}
+            {getDisplayLabel()}
             <RiArrowDownSLine className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

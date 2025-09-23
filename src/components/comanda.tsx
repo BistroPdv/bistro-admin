@@ -2,6 +2,7 @@
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 
 interface ComandaProps {
@@ -46,10 +47,12 @@ export function Comanda({ id, qrValue, numero }: ComandaProps) {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <img
+              <Image
                 src={data?.data.logo}
+                width={32}
+                height={32}
                 alt="Logo"
-                className="w-8 h-8 object-contain"
+                className="object-contain"
               />
             </div>
             <div>

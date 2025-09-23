@@ -15,7 +15,17 @@ export function TitlePage({
         <h1 className="text-2xl font-bold flex gap-2 items-center">
           {icon} {title}
         </h1>
-        <p className="text-muted-foreground">{description}</p>
+        <p
+          className="text-muted-foreground truncate overflow-hidden"
+          style={{
+            maxWidth: "clamp(120px, 40vw, 400px)",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={description}
+        >
+          {description}
+        </p>
       </div>
       {children}
     </div>
