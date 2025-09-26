@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { WebRTCLoader } from "@/components/webrtc-loader";
 import api from "@/lib/api";
 import {
   closestCenter,
@@ -116,6 +117,9 @@ export default function BuffetPage() {
   const [showCart, setShowCart] = useState<boolean>(false);
   const [orderedCategories, setOrderedCategories] = useState<Category[]>([]);
   const [showCategoryOrderModal, setShowCategoryOrderModal] =
+    useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string>("");
+  const [cameraPermissionDenied, setCameraPermissionDenied] =
     useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -225,10 +229,43 @@ export default function BuffetPage() {
     }
   }, [categories?.data]);
 
-  const handleQrScan = (result: any) => {
+  // WebRTC adapter é carregado pelo componente WebRTCLoader
+
+  const handleQrScan = (result: any, error: any) => {
+    if (error) {
+      console.error("QR Scanner error:", error);
+
+      // Verificar tipos de erro específicos
+      if (
+        error.message?.includes("Permission denied") ||
+        error.message?.includes("NotAllowedError") ||
+        error.name === "NotAllowedError"
+      ) {
+        setCameraPermissionDenied(true);
+        setCameraError(
+          "Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador."
+        );
+        toast.error("Permissão da câmera necessária");
+        return;
+      }
+
+      if (
+        error.message?.includes("NotFoundError") ||
+        error.name === "NotFoundError"
+      ) {
+        setCameraError("Câmera não encontrada");
+        return;
+      }
+
+      setCameraError("Erro na câmera: " + error.message);
+      return;
+    }
+
     if (result?.text) {
       setComandaNumber(result.text);
       setIsComandaSet(true);
+      setCameraError("");
+      setCameraPermissionDenied(false);
       toast.success(`Comanda ${result.text} identificada!`);
     }
   };
@@ -407,15 +444,48 @@ export default function BuffetPage() {
                           </div>
                         </div>
                         <div className="relative w-full h-40 md:h-44 bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden shadow-inner">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 border-2 border-white/30 rounded-lg animate-pulse"></div>
-                          </div>
-                          <QrReader
-                            onResult={handleQrScan}
-                            constraints={{
-                              facingMode: "environment",
-                            }}
-                          />
+                          {cameraError || cameraPermissionDenied ? (
+                            <div className="absolute inset-0 flex items-center justify-center p-4">
+                              <div className="text-center text-white bg-black/50 rounded-lg p-4 max-w-xs">
+                                <RiQrScanLine className="h-8 w-8 mx-auto mb-2" />
+                                <p className="text-sm font-medium mb-1">
+                                  Acesso à câmera necessário
+                                </p>
+                                {cameraPermissionDenied && (
+                                  <p className="text-xs text-white/80">
+                                    Clique no ícone da câmera no navegador e
+                                    permita o acesso
+                                  </p>
+                                )}
+                                {cameraError && !cameraPermissionDenied && (
+                                  <p className="text-xs text-white/80">
+                                    {cameraError}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-12 h-12 border-2 border-white/30 rounded-lg animate-pulse"></div>
+                              </div>
+                              <QrReader
+                                onResult={handleQrScan}
+                                constraints={{
+                                  facingMode: "environment",
+                                  width: { min: 640, ideal: 1280 },
+                                  height: { min: 480, ideal: 720 },
+                                }}
+                                videoStyle={{ width: "100%", height: "100%" }}
+                                videoContainerStyle={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                                videoId="qr-scanner"
+                              />
+                            </>
+                          )}
                         </div>
                         <div className="text-center text-xs text-muted-foreground">
                           Aponte a câmera para o QR code
@@ -476,6 +546,9 @@ export default function BuffetPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* WebRTC adapter para compatibilidade móvel */}
+      <WebRTCLoader />
+
       {/* Header com informações da comanda */}
       <div className="flex-none bg-primary text-primary-foreground p-3 md:p-4 rounded-lg mb-3 md:mb-4">
         <div className="flex items-center justify-between gap-3">
