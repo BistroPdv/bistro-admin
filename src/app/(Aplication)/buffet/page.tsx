@@ -124,7 +124,6 @@ export default function BuffetPage() {
   const [qrScanner, setQrScanner] = useState<Html5QrcodeScanner | null>(null);
   const [isScannerActive, setIsScannerActive] = useState<boolean>(false);
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
 
   // Adicionar estilos para otimizar touch e responsividade
@@ -263,27 +262,32 @@ export default function BuffetPage() {
     if (isQrMode) {
       setCameraError("");
       setCameraPermissionDenied(false);
-      setCameraInitializing(true);
+      setCameraInitializing(false); // Mudado para false para iniciar imediatamente
+      // Iniciar scanner imediatamente no modo QR
+      setTimeout(() => initQrScanner(), 50);
     } else {
       stopQrScanner();
     }
   }, [isQrMode]);
 
-  // Inicializar scanner QR quando necessário
+  // Backup initialization in case the previous one fails
   useEffect(() => {
     if (
       isQrMode &&
       !cameraError &&
       !cameraPermissionDenied &&
-      !isScannerActive &&
-      !cameraInitializing
+      !isScannerActive
     ) {
-      // Aguardar um pouco para garantir que o DOM está renderizado
-      setTimeout(() => {
-        initQrScanner();
-      }, 1000);
+      // Small delay backup initialization
+      const timeoutId = setTimeout(() => {
+        if (isQrMode && !isScannerActive) {
+          initQrScanner();
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [isQrMode, cameraError, cameraPermissionDenied, cameraInitializing]);
+  }, [isQrMode, cameraError, cameraPermissionDenied, isScannerActive]);
 
   // Cleanup para quando desmonta o componente
   useEffect(() => {
@@ -310,29 +314,50 @@ export default function BuffetPage() {
 
       if (!checkContainer()) {
         console.log("Container não está pronto, tentando novamente...");
-        setTimeout(initQrScanner, 500);
+        setTimeout(initQrScanner, 100); // Reduzido de 500ms para 100ms
         return;
       }
 
       const config = {
-        fps: 5, // FPS adequado para detecção contínua
+        fps: 2, // Reduzido para melhor estabilidade mobile
         qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
           // Garantir que as dimensões são válidas
-          const validWidth = Math.max(viewfinderWidth || 250, 100);
-          const validHeight = Math.max(viewfinderHeight || 250, 100);
+          const validWidth = Math.max(viewfinderWidth || 250, 150);
+          const validHeight = Math.max(viewfinderHeight || 250, 150);
 
-          const minEdgePercentage = 0.7; // 70% da menor dimensão
+          // Para mobile - usar dimensões mais conservadoras
+          const isMobile =
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            );
+
+          let minEdgePercentage = 0.6; // Reduzido para melhor detecção
+          let qrboxSize = 250; // Tamanho mínimo padrão para mobile
+
+          if (!isMobile) {
+            minEdgePercentage = 0.7;
+            qrboxSize = 300;
+          }
+
           const minEdgeSize = Math.min(validWidth, validHeight);
-          const qrboxSize = Math.floor(
-            Math.max(minEdgeSize * minEdgePercentage, 200)
+          const calculatedSize = Math.floor(
+            Math.max(minEdgeSize * minEdgePercentage, qrboxSize)
           );
 
           return {
-            width: Math.min(qrboxSize, validWidth * 0.8),
-            height: Math.min(qrboxSize, validHeight * 0.8),
+            width: Math.min(calculatedSize, validWidth * 0.9),
+            height: Math.min(calculatedSize, validHeight * 0.9),
           };
         },
         aspectRatio: 1.0,
+        videoConstraints: {
+          width: { min: 300, ideal: 640, max: 1280 },
+          height: { min: 200, ideal: 480, max: 960 },
+          facingMode: "environment",
+        },
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: false, // Desabilita detector alternativo que pode causar conflitos
+        },
       };
 
       const elementId = "qr-reader";
@@ -379,10 +404,18 @@ export default function BuffetPage() {
             errorMsg &&
             !errorMsg.includes("No QR code found") &&
             !errorMsg.includes("NotFoundException") &&
-            !errorMsg.includes("QR code not found")
+            !errorMsg.includes("QR code not found") &&
+            !errorMsg.includes("multformat readers") &&
+            !errorMsg.includes("no multformat readers")
           ) {
             console.log("Erro não crítico de scanner:", errorMsg);
             handleQrScanError(error);
+          } else if (
+            errorMsg?.includes("multformat readers") ||
+            errorMsg?.includes("no multformat readers")
+          ) {
+            // Tratar erro de multformat especificamente
+            console.warn("Erro multformat readers detectado - ignorando erro");
           }
           // Para erros de "QR code not found" - scanner continua normal
         }
@@ -400,7 +433,6 @@ export default function BuffetPage() {
       setIsScannerActive(false);
     }
   };
-
   // Função para parar o scanner QR
   const stopQrScanner = () => {
     if (qrScanner) {
@@ -483,8 +515,31 @@ export default function BuffetPage() {
       return;
     }
 
-    // Para outros erros genéricos
+    // Verificar erro específico de multformat readers (mobile)
     const errorMsg = error?.message || error?.toString() || "Erro na leitura";
+    if (
+      errorMsg?.includes("multformat readers") ||
+      errorMsg?.includes("no multformat readers") ||
+      errorMsg?.includes("unable to detect") ||
+      errorMsg?.includes("No readers available")
+    ) {
+      setCameraError(
+        "Câmera não conseguiu inicializar corretamente. Tente novamente."
+      );
+      setIsScannerActive(false);
+      stopQrScanner();
+
+      // Auto-retry após 2 segundos para este tipo de erro
+      setTimeout(() => {
+        if (isQrMode && !isScannerActive) {
+          console.log("Auto-retrying scanner após erro multformat...");
+          initQrScanner();
+        }
+      }, 2000);
+      return;
+    }
+
+    // Para outros erros genéricos
     if (errorMsg && !errorMsg.includes("No QR code found")) {
       console.log("Camera error occurred:", errorMsg);
       setCameraError(`Erro na câmera: ${errorMsg}`);
@@ -659,39 +714,42 @@ export default function BuffetPage() {
                   {/* Área principal */}
                   <div className="flex-1">
                     {isQrMode ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <div className="text-center">
                           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
                             <RiQrScanLine className="h-3 w-3" />
-                            Posicione o QR code na câmera
+                            Scanner QR Code Ativo
                           </div>
                         </div>
-                        <div className="relative w-full h-40 md:h-44 bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden shadow-inner">
+
+                        {/* Scanner QR em tela cheia/maior */}
+                        <div className="relative w-full min-h-[290px] md:h-[290px] bg-black rounded-xl overflow-hidden shadow-xl border-2 border-primary/20">
                           {cameraError || cameraPermissionDenied ? (
                             <div className="absolute inset-0 flex items-center justify-center p-4">
-                              <div className="text-center text-white bg-black/50 rounded-lg p-4 max-w-xs">
-                                <RiQrScanLine className="h-8 w-8 mx-auto mb-2" />
-                                <p className="text-sm font-medium mb-1">
+                              <div className="text-center text-white bg-black/80 rounded-xl p-6 max-w-sm">
+                                <RiQrScanLine className="h-12 w-12 mx-auto mb-4 text-primary" />
+                                <p className="text-lg font-medium mb-2">
                                   {cameraPermissionDenied
-                                    ? "Acesso à câmera necessário"
+                                    ? "Permissão da câmera necessária"
                                     : "Problema com a câmera"}
                                 </p>
                                 {cameraPermissionDenied && (
-                                  <p className="text-xs text-white/80">
-                                    Clique no ícone da câmera no navegador e
-                                    permita o acesso
+                                  <p className="text-sm text-white/80 mb-4">
+                                    Permita o acesso à câmera no navegador para
+                                    continuar
                                   </p>
                                 )}
                                 {cameraError && !cameraPermissionDenied && (
                                   <>
-                                    <p className="text-xs text-white/80 mb-3">
+                                    <p className="text-sm text-white/80 mb-4">
                                       {cameraError}
                                     </p>
                                     <button
                                       onClick={resetCamera}
-                                      className="px-3 py-1.5 bg-primary/80 hover:bg-primary text-white text-xs rounded transition-colors"
+                                      className="px-6 py-3 bg-primary hover:bg-primary/90 text-white text-sm rounded-lg transition-colors font-medium"
                                     >
-                                      Tentar Novamente
+                                      <RiQrScanLine className="inline h-4 w-4 mr-2" />
+                                      Reiniciar Scanner
                                     </button>
                                   </>
                                 )}
@@ -699,26 +757,35 @@ export default function BuffetPage() {
                             </div>
                           ) : (
                             <>
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-12 h-12 border-2 border-white/30 rounded-lg animate-pulse"></div>
-                              </div>
+                              {/* Loading indicator mais sutil */}
+                              {!isScannerActive && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="text-center text-white">
+                                    <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                                    <p className="text-sm font-medium">
+                                      Iniciando scanner...
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                               <div
                                 ref={scannerRef}
                                 id="qr-reader"
-                                className="absolute inset-0 w-full h-full"
-                                style={{
-                                  minWidth: "100%",
-                                  minHeight: "160px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
+                                className="absolute inset-0 w-full"
                               />
                             </>
                           )}
                         </div>
-                        <div className="text-center text-xs text-muted-foreground">
-                          Aponte a câmera para o QR code
+
+                        <div className="text-center">
+                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                            <span className="text-primary font-medium text-sm">
+                              {isScannerActive
+                                ? "Aponte para o QR code"
+                                : "Aguarde..."}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ) : (
