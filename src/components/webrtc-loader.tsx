@@ -1,28 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export function WebRTCLoader() {
+interface WebRTCLoaderProps {
+  onLoaded?: () => void;
+  retry?: boolean;
+}
+
+export function WebRTCLoader({ onLoaded, retry }: WebRTCLoaderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadWebRTCAdapter = useCallback(async () => {
+    if (isLoading) return; // Evitar carregamentos duplicados
+
+    setIsLoading(true);
+    try {
+      // Importa e CARREGA o adapter imediatamente
+      const adapter = await import("webrtc-adapter");
+
+      // Espera um pouco para garantir inicialização
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      setIsLoaded(true);
+      setIsLoading(false);
+      console.log(
+        "WebRTC adapter loaded successfully for mobile compatibility"
+      );
+      onLoaded?.();
+    } catch (error) {
+      console.warn("Failed to load webrtc-adapter:", error);
+      setIsLoading(false);
+    }
+  }, [onLoaded, isLoading]);
 
   useEffect(() => {
-    const loadWebRTCAdapter = async () => {
-      try {
-        // Carrega o webrtc-adapter apenas no lado do cliente
-        await import("webrtc-adapter");
-        setIsLoaded(true);
-        console.log(
-          "WebRTC adapter loaded successfully for mobile compatibility"
-        );
-      } catch (error) {
-        console.warn("Failed to load webrtc-adapter:", error);
-      }
-    };
-
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !isLoaded && !isLoading) {
       loadWebRTCAdapter();
     }
-  }, []);
+  }, [loadWebRTCAdapter, isLoaded, isLoading]);
 
-  return null; // Componente não renderiza nada, apenas carrega o adapter
+  // Retry se necessário
+  useEffect(() => {
+    if (retry && typeof window !== "undefined" && !isLoaded && !isLoading) {
+      console.log("Retrying WebRTC adapter load...");
+      loadWebRTCAdapter();
+    }
+  }, [retry, loadWebRTCAdapter, isLoaded, isLoading]);
+
+  // Expose como que pode ser usada por outros componentes
+  return isLoaded ? (
+    <div style={{ display: "none" }} data-webrtc-ready="true" />
+  ) : (
+    <div style={{ display: "none" }} data-webrtc-loading="true" />
+  );
 }

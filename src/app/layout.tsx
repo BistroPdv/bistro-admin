@@ -6,6 +6,9 @@ import { Metadata } from "next";
 import { ReactNode } from "react";
 import "./globals.css";
 
+// FOREARING webrtc-adapter setup para garantir disponibilidade
+import "@/lib/webrtc-setup";
+
 export const metadata: Metadata = {
   title: "Bistro Admin",
   description: "Sistema de administração do Bistro",

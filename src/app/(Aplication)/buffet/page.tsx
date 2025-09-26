@@ -121,6 +121,7 @@ export default function BuffetPage() {
   const [cameraError, setCameraError] = useState<string>("");
   const [cameraPermissionDenied, setCameraPermissionDenied] =
     useState<boolean>(false);
+  const [cameraInitializing, setCameraInitializing] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Adicionar estilos para otimizar touch e responsividade
@@ -231,15 +232,70 @@ export default function BuffetPage() {
 
   // WebRTC adapter é carregado pelo componente WebRTCLoader
 
+  // Carregamento de WebRTC adapter no lado cliente
+  useEffect(() => {
+    const ensureWebRTCSetup = async () => {
+      if (typeof window !== "undefined") {
+        try {
+          // Importa setup geral do webrtc
+          const { setupWebRTC } = await import("@/lib/webrtc-setup");
+          const isReady = await setupWebRTC();
+
+          if (isReady) {
+            console.log("WebRTC adapter set correctly");
+          } else {
+            console.warn("WebRTC adapter setup retried");
+          }
+        } catch (error) {
+          console.warn("WebRTC setup failed:", error);
+          // Fallback com import direto
+          await import("webrtc-adapter").catch(() => {});
+        }
+      }
+    };
+
+    ensureWebRTCSetup();
+  }, []);
+
+  // Efect para resetear erros de câmera quando modo QR muda
+  useEffect(() => {
+    if (isQrMode) {
+      setCameraError("");
+      setCameraPermissionDenied(false);
+      setCameraInitializing(true);
+    }
+  }, [isQrMode]);
+
+  // Reset de câmara quando necessário
+  const resetCamera = () => {
+    console.log("Resetting camera...");
+
+    // Reseta todos os estados de erro
+    setCameraError("");
+    setCameraPermissionDenied(false);
+    setCameraInitializing(true);
+
+    // Força um pequeno delay para que o componente re-renderize limpo
+    setTimeout(() => {
+      setCameraInitializing(false);
+    }, 500);
+  };
+
   const handleQrScan = (result: any, error: any) => {
     if (error) {
       console.error("QR Scanner error:", error);
+      console.log("Error details:", {
+        name: error?.name,
+        message: error?.message,
+        type: typeof error,
+        fullError: error,
+      });
 
       // Verificar tipos de erro específicos
       if (
-        error.message?.includes("Permission denied") ||
-        error.message?.includes("NotAllowedError") ||
-        error.name === "NotAllowedError"
+        error?.message?.includes("Permission denied") ||
+        error?.message?.includes("NotAllowedError") ||
+        error?.name === "NotAllowedError"
       ) {
         setCameraPermissionDenied(true);
         setCameraError(
@@ -250,14 +306,44 @@ export default function BuffetPage() {
       }
 
       if (
-        error.message?.includes("NotFoundError") ||
-        error.name === "NotFoundError"
+        error?.message?.includes("NotFoundError") ||
+        error?.name === "NotFoundError"
       ) {
         setCameraError("Câmera não encontrada");
         return;
       }
 
-      setCameraError("Erro na câmera: " + error.message);
+      // Verificar se é um erro de stream interrompido
+      if (
+        error?.message?.includes("stream") ||
+        error?.message?.includes("Stream")
+      ) {
+        setCameraError(
+          "Stream da câmera foi interrompido. Tentando novamente..."
+        );
+        return;
+      }
+
+      // Tratar erro undefined ou stream interrompido - possivelmente câmera perdeu acesso
+      const errorMsg = error?.message || error?.toString() || "Erro da câmera";
+      console.log("Camera error occurred:", {
+        message: errorMsg,
+        error: error,
+      });
+
+      // Se não conseguimos uma mensagem de erro, significa que pode ser um problema de stream
+      if (!errorMsg || errorMsg.includes("undefined")) {
+        console.log("Stream da câmera foi interrompido inesperadamente");
+
+        // Não faz automatico retry imediato - apenas flag como erro
+        setCameraError(
+          "Problema com o stream da câmera. Toque em QR Scanner para tentar novamente."
+        );
+        setCameraPermissionDenied(false);
+        return;
+      }
+
+      setCameraError(`Erro na câmera: ${errorMsg}`);
       return;
     }
 
@@ -449,7 +535,9 @@ export default function BuffetPage() {
                               <div className="text-center text-white bg-black/50 rounded-lg p-4 max-w-xs">
                                 <RiQrScanLine className="h-8 w-8 mx-auto mb-2" />
                                 <p className="text-sm font-medium mb-1">
-                                  Acesso à câmera necessário
+                                  {cameraPermissionDenied
+                                    ? "Acesso à câmera necessário"
+                                    : "Problema com a câmera"}
                                 </p>
                                 {cameraPermissionDenied && (
                                   <p className="text-xs text-white/80">
@@ -458,9 +546,17 @@ export default function BuffetPage() {
                                   </p>
                                 )}
                                 {cameraError && !cameraPermissionDenied && (
-                                  <p className="text-xs text-white/80">
-                                    {cameraError}
-                                  </p>
+                                  <>
+                                    <p className="text-xs text-white/80 mb-3">
+                                      {cameraError}
+                                    </p>
+                                    <button
+                                      onClick={resetCamera}
+                                      className="px-3 py-1.5 bg-primary/80 hover:bg-primary text-white text-xs rounded transition-colors"
+                                    >
+                                      Tentar Novamente
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </div>
@@ -473,8 +569,6 @@ export default function BuffetPage() {
                                 onResult={handleQrScan}
                                 constraints={{
                                   facingMode: "environment",
-                                  width: { min: 640, ideal: 1280 },
-                                  height: { min: 480, ideal: 720 },
                                 }}
                                 videoStyle={{ width: "100%", height: "100%" }}
                                 videoContainerStyle={{
@@ -547,7 +641,10 @@ export default function BuffetPage() {
   return (
     <div className="flex flex-col h-full">
       {/* WebRTC adapter para compatibilidade móvel */}
-      <WebRTCLoader />
+      <WebRTCLoader
+        onLoaded={() => console.log("WebRTC adapter ready via loader")}
+        retry={!!cameraError}
+      />
 
       {/* Header com informações da comanda */}
       <div className="flex-none bg-primary text-primary-foreground p-3 md:p-4 rounded-lg mb-3 md:mb-4">
