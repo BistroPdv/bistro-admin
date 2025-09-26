@@ -95,7 +95,7 @@ const data = {
           title: "Pedidos",
           url: "/buffet",
           icon: RiShoppingBasketLine,
-          permission: "orders" as const,
+          permission: "buffet" as const,
         },
       ],
     },
