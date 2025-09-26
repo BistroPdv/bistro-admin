@@ -118,7 +118,9 @@ export default function LoginPage() {
       const response = await authService.login(data);
       if (response.status === 201) {
         toast.success("Login realizado com sucesso!");
-        router.push("/dashboard");
+        response.data.user.role === "WAITER"
+          ? router.push("/buffet")
+          : router.push("/dashboard");
       }
     } catch (error: any) {
       if (error.response) {

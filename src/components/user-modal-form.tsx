@@ -133,6 +133,7 @@ export function UserFormModal({
                   { value: "OWNER", label: "Administrador" },
                   { value: "MANAGER", label: "Gerente" },
                   { value: "USER", label: "Usuário" },
+                  { value: "WAITER", label: "Garçom" },
                 ]}
               />
             </div>

@@ -19,6 +19,7 @@ export const ROUTE_PERMISSIONS = {
   "/payment-method": ["SYSADMIN", "OWNER"],
   "/settings": ["SYSADMIN", "OWNER"],
   "/caixas": ["SYSADMIN", "OWNER"],
+  "/buffet": ["SYSADMIN", "OWNER", "MANAGER", "USER", "WAITER"],
 } as const;
 
 // Configuração de permissões para itens do menu
@@ -30,6 +31,8 @@ export const MENU_PERMISSIONS = {
   tables: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
   orders: ["SYSADMIN", "OWNER", "MANAGER", "USER"],
   printers: ["SYSADMIN", "OWNER", "MANAGER"],
+
+  buffet: ["SYSADMIN", "OWNER", "MANAGER", "USER", "WAITER"],
 
   // Seção Sistema
   users: ["SYSADMIN", "OWNER"],

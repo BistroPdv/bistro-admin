@@ -24,12 +24,14 @@ const roleColors = {
   OWNER: "bg-purple-500/10 text-purple-500",
   MANAGER: "bg-blue-500/10 text-blue-500",
   USER: "bg-green-500/10 text-green-500",
+  WAITER: "bg-yellow-500/10 text-yellow-500",
 };
 
 const roleLabels = {
   OWNER: "Administrador",
   MANAGER: "Gerente",
   USER: "Usuário",
+  WAITER: "Garçom",
 };
 
 export function UserList() {
