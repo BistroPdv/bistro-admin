@@ -15,7 +15,7 @@ export default function BuffetLayout({ children }: { children: ReactNode }) {
               <AppSidebar />
               <SidebarInset className="overflow-hidden flex flex-col h-full">
                 <div className="flex flex-1 flex-col overflow-hidden">
-                  <div className="flex-1 overflow-auto">{children}</div>
+                  <div className="flex-1 overflow-hidden">{children}</div>
                 </div>
               </SidebarInset>
             </SidebarProvider>

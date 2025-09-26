@@ -365,12 +365,12 @@ export default function BuffetPage() {
                 {/* Layout em flex-row para aproveitar espaço lateral */}
                 <div className="flex flex-col lg:flex-row gap-4">
                   {/* Botões de seleção */}
-                  <div className="flex flex-row lg:flex-col justify-center lg:justify-start gap-2 lg:w-32">
+                  <div className="flex flex-row  lg:flex-col justify-center lg:justify-start gap-2 lg:w-32">
                     <Button
                       variant={isQrMode ? "default" : "outline"}
                       size="sm"
                       onClick={() => setIsQrMode(true)}
-                      className={`flex items-center gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
+                      className={`flex items-center max-w-24 gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
                         isQrMode
                           ? "bg-primary hover:bg-primary/90 shadow-lg"
                           : "hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -384,7 +384,7 @@ export default function BuffetPage() {
                       variant={!isQrMode ? "default" : "outline"}
                       size="sm"
                       onClick={() => setIsQrMode(false)}
-                      className={`flex items-center gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
+                      className={`flex max-w-24 items-center gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
                         !isQrMode
                           ? "bg-primary hover:bg-primary/90 shadow-lg"
                           : "hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -614,7 +614,7 @@ export default function BuffetPage() {
         <div
           className={`${
             !showCart ? "hidden lg:flex" : "fixed"
-          } lg:relative top-0 left-0 right-0 bottom-0 lg:top-auto lg:left-auto lg:right-auto lg:bottom-auto bg-white dark:bg-gray-900 z-40 lg:z-auto w-full lg:w-80 flex flex-col min-h-0 lg:min-h-0`}
+          } lg:relative h-[95%] top-0 left-0 right-0 bottom-0 lg:top-auto lg:left-auto lg:right-auto lg:bottom-auto bg-white dark:bg-gray-900 z-40 lg:z-auto w-full lg:w-80 flex flex-col min-h-0 lg:min-h-0`}
         >
           {showCart && (
             <div className="lg:hidden absolute top-4 right-4">
@@ -659,8 +659,11 @@ export default function BuffetPage() {
                               {item.imagem && (
                                 <img
                                   src={item.imagem}
-                                  alt={item.nome}
                                   className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg flex-shrink-0"
+                                  onError={(e) => {
+                                    e.currentTarget.src =
+                                      "https://www.unirg.edu.br/imagens/noticia_padrao.png";
+                                  }}
                                 />
                               )}
                               <div className="flex-1 min-w-0">
