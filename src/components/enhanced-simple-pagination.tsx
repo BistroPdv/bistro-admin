@@ -38,14 +38,14 @@ export function EnhancedSimplePagination({
     pageSize === -1 ? totalItems : Math.min(currentPage * pageSize, totalItems);
 
   // Calcular páginas visíveis com elipse
-  const getVisiblePages = () => {
+  const getVisiblePages = (): (number | string)[] => {
     // Se estiver no modo "Todos", não mostrar páginas
     if (pageSize === -1) {
       return [];
     }
 
     const maxVisible = 5;
-    const pages = [];
+    const pages: (number | string)[] = [];
 
     if (totalPages <= maxVisible) {
       // Mostrar todas as páginas se for 5 ou menos

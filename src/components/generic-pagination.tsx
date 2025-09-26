@@ -36,10 +36,10 @@ export function GenericPagination({
   maxVisiblePages = 5,
 }: GenericPaginationProps) {
   // Calcular o range de páginas para exibir
-  const getVisiblePages = () => {
+  const getVisiblePages = (): (number | string)[] => {
     const delta = Math.floor(maxVisiblePages / 2);
-    const range = [];
-    const rangeWithDots = [];
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
 
     for (
       let i = Math.max(2, currentPage - delta);

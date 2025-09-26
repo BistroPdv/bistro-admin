@@ -38,13 +38,13 @@ export function AdvancedPagination({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   // Calcular páginas visíveis com elipse
-  const getVisiblePages = () => {
+  const getVisiblePages = (): (number | string)[] => {
     if (totalPages <= maxVisiblePages) {
       // Mostrar todas as páginas se for menor ou igual ao máximo
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    const pages = [];
+    const pages: (number | string)[] = [];
     const delta = Math.floor(maxVisiblePages / 2);
     const startPage = Math.max(1, currentPage - delta);
     const endPage = Math.min(totalPages, currentPage + delta);

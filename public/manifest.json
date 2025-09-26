@@ -1,0 +1,44 @@
+{
+  "name": "Bistro Admin",
+  "short_name": "Bistro Admin",
+  "description": "Sistema de administração do Bistro",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acessar dashboard",
+      "url": "/dashboard"
+    },
+    {
+      "name": "Pedidos",
+      "short_name": "Pedidos",
+      "description": "Gerenciar pedidos",
+      "url": "/orders"
+    },
+    {
+      "name": "Produtos",
+      "short_name": "Produtos",
+      "description": "Gerenciar produtos",
+      "url": "/products"
+    },
+    {
+      "name": "Mesas",
+      "short_name": "Mesas",
+      "description": "Gerenciar mesas",
+      "url": "/tables"
+    }
+  ]
+}

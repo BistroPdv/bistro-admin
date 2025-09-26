@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     // Desativa headers de segurança em desenvolvimento
     if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
       console.log(process.env.NEXT_PUBLIC_NODE_ENV);
-
       return [];
     }
 

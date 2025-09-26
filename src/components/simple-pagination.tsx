@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
 
 interface SimplePaginationProps {
   currentPage: number;
@@ -47,7 +48,7 @@ export function SimplePagination({
         <div className="flex items-center gap-1">
           {(() => {
             const maxVisible = 5;
-            const pages = [];
+            const pages: ReactNode[] = [];
 
             if (totalPages <= maxVisible) {
               // Mostrar todas as páginas se for 5 ou menos

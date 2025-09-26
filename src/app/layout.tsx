@@ -7,13 +7,31 @@ import { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bistro Admin - Login",
-  description: "Gestor de administrativo para o Bistro",
+  title: "Bistro Admin",
+  description: "Sistema de administração do Bistro",
   authors: [{ name: "Diego Carlos", url: "https://diego-carlos.top" }],
   icons: {
     icon: "/favicon.ico",
+    shortcut: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Bistro Admin",
   },
 };
+
+export function generateViewport() {
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    themeColor: "#000000",
+  };
+}
 
 const fontSans = Inter({
   subsets: ["latin"],
