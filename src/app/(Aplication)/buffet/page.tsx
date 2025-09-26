@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { WebRTCLoader } from "@/components/webrtc-loader";
 import api from "@/lib/api";
 import {
   closestCenter,
@@ -47,8 +46,8 @@ import {
 } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { useEffect, useRef, useState } from "react";
-import { QrReader } from "react-qr-reader";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -122,7 +121,11 @@ export default function BuffetPage() {
   const [cameraPermissionDenied, setCameraPermissionDenied] =
     useState<boolean>(false);
   const [cameraInitializing, setCameraInitializing] = useState<boolean>(false);
+  const [qrScanner, setQrScanner] = useState<Html5QrcodeScanner | null>(null);
+  const [isScannerActive, setIsScannerActive] = useState<boolean>(false);
+  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<HTMLDivElement>(null);
 
   // Adicionar estilos para otimizar touch e responsividade
   useEffect(() => {
@@ -230,8 +233,6 @@ export default function BuffetPage() {
     }
   }, [categories?.data]);
 
-  // WebRTC adapter é carregado pelo componente WebRTCLoader
-
   // Carregamento de WebRTC adapter no lado cliente
   useEffect(() => {
     const ensureWebRTCSetup = async () => {
@@ -263,96 +264,232 @@ export default function BuffetPage() {
       setCameraError("");
       setCameraPermissionDenied(false);
       setCameraInitializing(true);
+    } else {
+      stopQrScanner();
     }
   }, [isQrMode]);
+
+  // Inicializar scanner QR quando necessário
+  useEffect(() => {
+    if (
+      isQrMode &&
+      !cameraError &&
+      !cameraPermissionDenied &&
+      !isScannerActive &&
+      !cameraInitializing
+    ) {
+      // Aguardar um pouco para garantir que o DOM está renderizado
+      setTimeout(() => {
+        initQrScanner();
+      }, 1000);
+    }
+  }, [isQrMode, cameraError, cameraPermissionDenied, cameraInitializing]);
+
+  // Cleanup para quando desmonta o componente
+  useEffect(() => {
+    return () => {
+      stopQrScanner();
+    };
+  }, []);
+
+  // Função para inicializar o scanner QR
+  const initQrScanner = () => {
+    if (!scannerRef.current || isScannerActive) return;
+
+    try {
+      // Aguardar um pouco para garantir que o DOM está estável
+      const checkContainer = () => {
+        const element =
+          scannerRef.current || document.getElementById("qr-reader");
+        if (!element) return false;
+
+        // Verificar se o container tem dimensões válidas
+        const rect = element.getBoundingClientRect();
+        return rect.width > 100 && rect.height > 100;
+      };
+
+      if (!checkContainer()) {
+        console.log("Container não está pronto, tentando novamente...");
+        setTimeout(initQrScanner, 500);
+        return;
+      }
+
+      const config = {
+        fps: 5, // FPS adequado para detecção contínua
+        qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
+          // Garantir que as dimensões são válidas
+          const validWidth = Math.max(viewfinderWidth || 250, 100);
+          const validHeight = Math.max(viewfinderHeight || 250, 100);
+
+          const minEdgePercentage = 0.7; // 70% da menor dimensão
+          const minEdgeSize = Math.min(validWidth, validHeight);
+          const qrboxSize = Math.floor(
+            Math.max(minEdgeSize * minEdgePercentage, 200)
+          );
+
+          return {
+            width: Math.min(qrboxSize, validWidth * 0.8),
+            height: Math.min(qrboxSize, validHeight * 0.8),
+          };
+        },
+        aspectRatio: 1.0,
+      };
+
+      const elementId = "qr-reader";
+
+      // Limpar qualquer scanner anterior
+      if (qrScanner) {
+        try {
+          qrScanner.clear();
+        } catch (e) {
+          console.warn("Erro ao limpar scanner anterior:", e);
+        }
+      }
+
+      const scanner = new Html5QrcodeScanner(
+        elementId,
+        config,
+        /* verbose= */ false
+      );
+
+      scanner.render(
+        (decodedText) => {
+          // Scanner sempre ativo - só processa quando encontra QR code
+          console.log("QR Code detectado:", decodedText);
+          setComandaNumber(decodedText);
+          setIsComandaSet(true);
+          setCameraError("");
+          setCameraPermissionDenied(false);
+          setIsScannerActive(false);
+          toast.success(`Comanda ${decodedText} identificada!`);
+          try {
+            scanner.clear();
+          } catch (e) {
+            console.warn("Erro ao limpar scanner:", e);
+          }
+        },
+        (error: any) => {
+          // Ignorar apenas erros de "QR code não encontrado"
+          // Scanner mantém ativo para continuar tentando
+          const errorMsg =
+            typeof error === "string" ? error : error?.message || "";
+
+          // Se não é erro de QR não encontrado, informar
+          if (
+            errorMsg &&
+            !errorMsg.includes("No QR code found") &&
+            !errorMsg.includes("NotFoundException") &&
+            !errorMsg.includes("QR code not found")
+          ) {
+            console.log("Erro não crítico de scanner:", errorMsg);
+            handleQrScanError(error);
+          }
+          // Para erros de "QR code not found" - scanner continua normal
+        }
+      );
+
+      setQrScanner(scanner);
+      setIsScannerActive(true);
+      setIsCameraReady(true);
+      setCameraInitializing(false);
+      console.log("Scanner QR ativo e aguardando QR code...");
+    } catch (error) {
+      console.error("Erro ao inicializar scanner:", error);
+      setCameraError("Erro ao inicializar a câmera");
+      setCameraInitializing(false);
+      setIsScannerActive(false);
+    }
+  };
+
+  // Função para parar o scanner QR
+  const stopQrScanner = () => {
+    if (qrScanner) {
+      try {
+        qrScanner.clear();
+      } catch (error) {
+        console.warn("Error clearing scanner:", error);
+        // Força limpeza se clear falhou
+        const element =
+          scannerRef.current || document.getElementById("qr-reader");
+        if (element) {
+          element.innerHTML = "";
+        }
+      }
+      setQrScanner(null);
+    }
+    setIsScannerActive(false);
+  };
 
   // Reset de câmara quando necessário
   const resetCamera = () => {
     console.log("Resetting camera...");
+
+    // Para e limpa o scanner atual
+    stopQrScanner();
 
     // Reseta todos os estados de erro
     setCameraError("");
     setCameraPermissionDenied(false);
     setCameraInitializing(true);
 
-    // Força um pequeno delay para que o componente re-renderize limpo
+    // Delay adequado para total resete
     setTimeout(() => {
       setCameraInitializing(false);
-    }, 500);
+      if (isQrMode) {
+        initQrScanner();
+      }
+    }, 1000);
   };
 
-  const handleQrScan = (result: any, error: any) => {
-    if (error) {
-      console.error("QR Scanner error:", error);
-      console.log("Error details:", {
-        name: error?.name,
-        message: error?.message,
-        type: typeof error,
-        fullError: error,
-      });
+  // Função para tratamento de erros do QR scanner html5-qrcode
+  const handleQrScanError = (error: any) => {
+    console.error("QR Scanner error:", error);
 
-      // Verificar tipos de erro específicos
-      if (
-        error?.message?.includes("Permission denied") ||
-        error?.message?.includes("NotAllowedError") ||
-        error?.name === "NotAllowedError"
-      ) {
-        setCameraPermissionDenied(true);
-        setCameraError(
-          "Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador."
-        );
-        toast.error("Permissão da câmera necessária");
-        return;
-      }
-
-      if (
-        error?.message?.includes("NotFoundError") ||
-        error?.name === "NotFoundError"
-      ) {
-        setCameraError("Câmera não encontrada");
-        return;
-      }
-
-      // Verificar se é um erro de stream interrompido
-      if (
-        error?.message?.includes("stream") ||
-        error?.message?.includes("Stream")
-      ) {
-        setCameraError(
-          "Stream da câmera foi interrompido. Tentando novamente..."
-        );
-        return;
-      }
-
-      // Tratar erro undefined ou stream interrompido - possivelmente câmera perdeu acesso
-      const errorMsg = error?.message || error?.toString() || "Erro da câmera";
-      console.log("Camera error occurred:", {
-        message: errorMsg,
-        error: error,
-      });
-
-      // Se não conseguimos uma mensagem de erro, significa que pode ser um problema de stream
-      if (!errorMsg || errorMsg.includes("undefined")) {
-        console.log("Stream da câmera foi interrompido inesperadamente");
-
-        // Não faz automatico retry imediato - apenas flag como erro
-        setCameraError(
-          "Problema com o stream da câmera. Toque em QR Scanner para tentar novamente."
-        );
-        setCameraPermissionDenied(false);
-        return;
-      }
-
-      setCameraError(`Erro na câmera: ${errorMsg}`);
+    // Verificar tipos de erro específicos do html5-qrcode
+    if (
+      error?.message?.includes("Permission denied") ||
+      error?.message?.includes("NotAllowedError") ||
+      error?.name === "NotAllowedError"
+    ) {
+      setCameraPermissionDenied(true);
+      setCameraError(
+        "Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador."
+      );
+      toast.error("Permissão da câmera necessária");
       return;
     }
 
-    if (result?.text) {
-      setComandaNumber(result.text);
-      setIsComandaSet(true);
-      setCameraError("");
-      setCameraPermissionDenied(false);
-      toast.success(`Comanda ${result.text} identificada!`);
+    if (
+      error?.message?.includes("NotFoundError") ||
+      error?.name === "NotFoundError"
+    ) {
+      setCameraError("Câmera não encontrada");
+      setIsScannerActive(false);
+      stopQrScanner();
+      return;
+    }
+
+    // Verificar se é um erro de stream interrompido
+    if (
+      error?.message?.includes("stream") ||
+      error?.message?.includes("Stream") ||
+      error?.message?.includes("Camera access denied")
+    ) {
+      setCameraError(
+        "Problema com o stream da câmera. Toque em 'Tentar Novamente' para continuar."
+      );
+      setIsScannerActive(false);
+      stopQrScanner();
+      return;
+    }
+
+    // Para outros erros genéricos
+    const errorMsg = error?.message || error?.toString() || "Erro na leitura";
+    if (errorMsg && !errorMsg.includes("No QR code found")) {
+      console.log("Camera error occurred:", errorMsg);
+      setCameraError(`Erro na câmera: ${errorMsg}`);
+      setIsScannerActive(false);
+      stopQrScanner();
     }
   };
 
@@ -565,18 +702,17 @@ export default function BuffetPage() {
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-12 h-12 border-2 border-white/30 rounded-lg animate-pulse"></div>
                               </div>
-                              <QrReader
-                                onResult={handleQrScan}
-                                constraints={{
-                                  facingMode: "environment",
+                              <div
+                                ref={scannerRef}
+                                id="qr-reader"
+                                className="absolute inset-0 w-full h-full"
+                                style={{
+                                  minWidth: "100%",
+                                  minHeight: "160px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
                                 }}
-                                videoStyle={{ width: "100%", height: "100%" }}
-                                videoContainerStyle={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                                videoId="qr-scanner"
                               />
                             </>
                           )}
@@ -640,12 +776,6 @@ export default function BuffetPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* WebRTC adapter para compatibilidade móvel */}
-      <WebRTCLoader
-        onLoaded={() => console.log("WebRTC adapter ready via loader")}
-        retry={!!cameraError}
-      />
-
       {/* Header com informações da comanda */}
       <div className="flex-none bg-primary text-primary-foreground p-3 md:p-4 rounded-lg mb-3 md:mb-4">
         <div className="flex items-center justify-between gap-3">
