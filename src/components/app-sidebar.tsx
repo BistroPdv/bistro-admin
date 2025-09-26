@@ -93,7 +93,7 @@ const data = {
         {
           id: "p18",
           title: "Pedidos",
-          url: "/orders",
+          url: "/buffet",
           icon: RiShoppingBasketLine,
           permission: "orders" as const,
         },

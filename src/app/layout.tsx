@@ -27,8 +27,8 @@ export function generateViewport() {
   return {
     width: "device-width",
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    maximumScale: 10,
+    userScalable: true,
     themeColor: "#000000",
   };
 }
