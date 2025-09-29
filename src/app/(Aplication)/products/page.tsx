@@ -282,6 +282,7 @@ export default function Page() {
         loading={
           updateProductMutation.isPending || createProductMutation.isPending
         }
+        onCategoryUpdate={() => refetch()}
         categories={categories?.data || []}
         onSubmit={handleSubmit}
         product={editingProduct || undefined}

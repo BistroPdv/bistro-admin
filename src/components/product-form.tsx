@@ -25,9 +25,11 @@ import {
 } from "@/schemas/product-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
-import { Loader2, PlusCircle } from "lucide-react";
+import _ from "lodash";
+import { Loader2, Plus, PlusCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { CompanyForm } from "./company-form";
 import { ImportEventTypes, ImportOptionsModal } from "./import-options-modal";
 import { Button } from "./ui/button";
 import { DialogFooter, DialogHeader } from "./ui/dialog";
@@ -40,11 +42,13 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface ProductFormProps {
   isDialogOpen?: boolean;
   setIsDialogOpen: (isDialogOpen: boolean) => void;
   categories: Category[];
+  onCategoryUpdate?: () => void;
   onSubmit: (data: ProductFormValues) => void;
   product?: Product;
   loading?: boolean;
@@ -55,6 +59,7 @@ export function ProductForm({
   isDialogOpen = false,
   setIsDialogOpen,
   categories,
+  onCategoryUpdate,
   onSubmit,
   product,
   loading = false,
@@ -64,7 +69,7 @@ export function ProductForm({
   const user = authService.getUser();
   const settings = authService.getSettings();
   const formRef = useRef<HTMLFormElement>(null);
-
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -133,7 +138,7 @@ export function ProductForm({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4 relative">
           <Form {...form}>
             <form
               id="product-form"
@@ -238,31 +243,47 @@ export function ProductForm({
                           <span className="text-destructive mr-1">*</span>
                           Categoria
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione uma categoria" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                <div className="flex items-center gap-2">
-                                  {category.cor && (
-                                    <div
-                                      className="w-3 h-3 rounded-full"
-                                      style={{ backgroundColor: category.cor }}
-                                    />
-                                  )}
-                                  {category.nome}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione uma categoria" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {_.orderBy(categories, "nome", "asc").map(
+                                (category) => (
+                                  <SelectItem
+                                    key={category.id}
+                                    value={category.id}
+                                  >
+                                    {category.nome}
+                                  </SelectItem>
+                                )
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                onClick={() => setCategoryOpen(!categoryOpen)}
+                              >
+                                <Plus
+                                  data-category-open={categoryOpen}
+                                  className="h-4 w-4 transition-all duration-500 data-[category-open=true]:rotate-45"
+                                />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Adicionar nova categoria</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <FormDescription>
                           Selecione a categoria do produto.
                         </FormDescription>
@@ -291,6 +312,21 @@ export function ProductForm({
               </div>
             </form>
           </Form>
+          <div
+            data-category-open={categoryOpen}
+            className={`
+                      absolute
+                      right-0
+                      bottom-2
+                      opacity-0 translate-y-4 pointer-events-none
+                      data-[category-open=true]:opacity-100
+                      data-[category-open=true]:translate-y-0
+                      data-[category-open=true]:pointer-events-auto
+                      transition-all duration-500
+                    `}
+          >
+            <CompanyForm onCategoryUpdate={onCategoryUpdate} />
+          </div>
         </div>
 
         <DialogFooter className="flex-none border-t pt-4 relative">
