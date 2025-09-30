@@ -32,6 +32,9 @@ export default function BuffetPage() {
     isLoading,
     validatingComanda,
     isCreatingOrder,
+    devices,
+    selectedCameraId,
+    getCurrentCameraName,
 
     // Funções
     handleManualInput,
@@ -43,6 +46,7 @@ export default function BuffetPage() {
     resetCamera,
     handleQrResult,
     handleQrError,
+    toggleCamera,
   } = useBuffetLogic();
 
   // Função para lidar com o fim do drag
@@ -80,6 +84,10 @@ export default function BuffetPage() {
         validatingComanda={validatingComanda}
         onQrResult={handleQrResult}
         onQrError={handleQrError}
+        devices={devices}
+        selectedCameraId={selectedCameraId}
+        getCurrentCameraName={getCurrentCameraName}
+        onToggleCamera={toggleCamera}
       />
     );
   }

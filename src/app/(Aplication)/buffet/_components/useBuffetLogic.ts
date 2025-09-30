@@ -2,6 +2,7 @@ import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { useDevices } from "@yudiel/react-qr-scanner";
 import { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -44,6 +45,10 @@ export const useBuffetLogic = () => {
   const [validatingComanda, setValidatingComanda] = useState<boolean>(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState<boolean>(false);
   const [isFormFactorMobile, setIsFormFactorMobile] = useState(false);
+  const [selectedCameraId, setSelectedCameraId] = useState<string>("");
+
+  // Hook para obter dispositivos de câmera disponíveis
+  const devices = useDevices();
 
   // Estilos para otimizar touch e responsividade
   useEffect(() => {
@@ -94,6 +99,40 @@ export const useBuffetLogic = () => {
         }
         .mobile-stack {
           flex-direction: column;
+        }
+      }
+      @media (max-width: 375px) {
+        .xs\:hidden {
+          display: none !important;
+        }
+        .xs\:inline {
+          display: inline !important;
+        }
+        .touch-button {
+          min-height: 48px;
+          min-width: 48px;
+        }
+        .mobile-text {
+          font-size: 12px;
+        }
+        .mobile-title {
+          font-size: 16px;
+        }
+      }
+      @media (min-width: 376px) and (max-width: 640px) {
+        .xs\:hidden {
+          display: none !important;
+        }
+        .xs\:inline {
+          display: inline !important;
+        }
+      }
+      @media (min-width: 641px) {
+        .xs\:hidden {
+          display: none !important;
+        }
+        .xs\:inline {
+          display: inline !important;
         }
       }
     `;
@@ -242,6 +281,41 @@ export const useBuffetLogic = () => {
     console.log("Resetting camera...");
     setCameraError("");
     setCameraPermissionDenied(false);
+  };
+
+  // Função para alternar entre câmeras disponíveis
+  const toggleCamera = () => {
+    if (devices && devices.length > 1) {
+      const currentIndex = devices.findIndex(
+        (device) => device.deviceId === selectedCameraId
+      );
+      const nextIndex = (currentIndex + 1) % devices.length;
+      const nextDevice = devices[nextIndex];
+      setSelectedCameraId(nextDevice.deviceId);
+
+      // Reset de erros ao trocar câmera
+      setCameraError("");
+      setCameraPermissionDenied(false);
+
+      toast.success(
+        `Câmera alterada para: ${
+          nextDevice.label || "Câmera " + (nextIndex + 1)
+        }`
+      );
+    } else {
+      toast.info("Apenas uma câmera disponível");
+    }
+  };
+
+  // Função para obter o nome da câmera atual
+  const getCurrentCameraName = () => {
+    if (!selectedCameraId && devices && devices.length > 0) {
+      return devices[0].label || "Câmera padrão";
+    }
+    const currentDevice = devices?.find(
+      (device) => device.deviceId === selectedCameraId
+    );
+    return currentDevice?.label || "Câmera selecionada";
   };
 
   useEffect(() => {
@@ -448,6 +522,9 @@ export const useBuffetLogic = () => {
     isCreatingOrder,
     isFormFactorMobile,
     setIsFormFactorMobile,
+    devices,
+    selectedCameraId,
+    getCurrentCameraName,
     // Funções
     handleManualInput,
     handleAddToCart,
@@ -459,6 +536,7 @@ export const useBuffetLogic = () => {
     resetCamera,
     handleQrResult,
     handleQrError,
+    toggleCamera,
     saveCategoryOrder,
     loadCategoryOrder,
     validateComanda,

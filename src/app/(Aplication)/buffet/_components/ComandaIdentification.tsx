@@ -3,7 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { RiCheckLine, RiKeyboardLine, RiQrScanLine } from "@remixicon/react";
+import {
+  RiCameraSwitchLine,
+  RiCheckLine,
+  RiKeyboardLine,
+  RiQrScanLine,
+} from "@remixicon/react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 
 import { IDetectedBarcode } from "@yudiel/react-qr-scanner";
@@ -20,6 +25,10 @@ interface ComandaIdentificationProps {
   validatingComanda?: boolean;
   onQrResult: (result: string) => void;
   onQrError: (error: any) => void;
+  devices: any[];
+  selectedCameraId: string;
+  getCurrentCameraName: () => string;
+  onToggleCamera: () => void;
 }
 
 export const ComandaIdentification = ({
@@ -34,6 +43,10 @@ export const ComandaIdentification = ({
   validatingComanda,
   onQrResult,
   onQrError,
+  devices,
+  selectedCameraId,
+  getCurrentCameraName,
+  onToggleCamera,
 }: ComandaIdentificationProps) => {
   // Função para lidar com os códigos detectados
   const handleScan = (detectedCodes: IDetectedBarcode[]) => {
@@ -44,92 +57,109 @@ export const ComandaIdentification = ({
     }
   };
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex items-start justify-center px-4 py-4">
-        <div className="w-full max-w-xl">
-          <Card className="shadow-xl">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-lg md:text-xl">
+    <div className="flex flex-col h-full min-h-screen">
+      <div className="flex-1 flex items-center justify-center px-2 sm:px-4 py-2 sm:py-4">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+          <Card className="shadow-xl w-full">
+            <CardHeader className="text-center pb-2 px-3 sm:px-6">
+              <CardTitle className="text-base sm:text-lg md:text-xl lg:text-2xl">
                 Identificar Comanda
               </CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Escolha uma das opções abaixo para continuar
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Layout em flex-row para aproveitar espaço lateral */}
-              <div className="flex flex-col lg:flex-row gap-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
+              {/* Layout responsivo */}
+              <div className="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4">
                 {/* Botões de seleção */}
-                <div className="flex flex-row  lg:flex-col justify-center lg:justify-start gap-2 lg:w-32">
+                <div className="flex flex-row sm:flex-col lg:flex-col justify-center sm:justify-start lg:justify-start gap-2 sm:gap-3 lg:w-32">
                   <Button
                     variant={isQrMode ? "default" : "outline"}
                     size="sm"
                     onClick={() => setIsQrMode(true)}
-                    className={`flex items-center max-w-24 gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
+                    className={`flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-2.5 touch-button touch-optimized transition-all duration-200 w-full sm:w-auto lg:w-full min-h-[44px] sm:min-h-[40px] ${
                       isQrMode
                         ? "bg-primary hover:bg-primary/90 shadow-lg"
                         : "hover:bg-gray-50 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <RiQrScanLine className="h-4 w-4" />
-                    <span className="hidden sm:inline">QR Code</span>
-                    <span className="sm:hidden">QR</span>
+                    <RiQrScanLine className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden xs:inline sm:inline">QR Code</span>
+                    <span className="xs:hidden sm:hidden">QR</span>
                   </Button>
                   <Button
                     variant={!isQrMode ? "default" : "outline"}
                     size="sm"
                     onClick={() => setIsQrMode(false)}
-                    className={`flex max-w-24 items-center gap-2 text-sm px-3 py-2 touch-button touch-optimized transition-all duration-200 w-full lg:w-full ${
+                    className={`flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 sm:py-2.5 touch-button touch-optimized transition-all duration-200 w-full sm:w-auto lg:w-full min-h-[44px] sm:min-h-[40px] ${
                       !isQrMode
                         ? "bg-primary hover:bg-primary/90 shadow-lg"
                         : "hover:bg-gray-50 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <RiKeyboardLine className="h-4 w-4" />
-                    <span className="hidden sm:inline">Digitar</span>
-                    <span className="sm:hidden">#</span>
+                    <RiKeyboardLine className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden xs:inline sm:inline">Digitar</span>
+                    <span className="xs:hidden sm:hidden">#</span>
                   </Button>
                 </div>
 
                 {/* Área principal */}
                 <div className="flex-1">
                   {isQrMode ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <div className="text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
+                        <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
                           <RiQrScanLine className="h-3 w-3" />
-                          Scanner QR Code Ativo
+                          <span className="hidden xs:inline">Scanner QR Code Ativo</span>
+                          <span className="xs:hidden">Scanner Ativo</span>
                         </div>
+                        {devices && devices.length > 1 && (
+                          <div className="mt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={onToggleCamera}
+                              className="flex items-center gap-1 sm:gap-2 text-xs px-2 sm:px-3 py-1 sm:py-1.5 h-auto min-h-[36px]"
+                            >
+                              <RiCameraSwitchLine className="h-3 w-3" />
+                              <span className="truncate max-w-[120px] sm:max-w-none">
+                                {getCurrentCameraName()}
+                              </span>
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Scanner QR em tela cheia/maior */}
-                      <div className="relative w-full min-h-[290px] md:h-[290px] bg-black rounded-xl overflow-hidden shadow-xl border-2 border-primary/20">
+                      {/* Scanner QR responsivo */}
+                      <div className="relative w-full min-h-[200px] xs:min-h-[240px] sm:min-h-[280px] md:min-h-[320px] lg:min-h-[350px] bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-xl border-2 border-primary/20">
                         {cameraError || cameraPermissionDenied ? (
-                          <div className="absolute inset-0 flex items-center justify-center p-4">
-                            <div className="text-center text-white bg-black/80 rounded-xl p-6 max-w-sm">
-                              <RiQrScanLine className="h-12 w-12 mx-auto mb-4 text-primary" />
-                              <p className="text-lg font-medium mb-2">
+                          <div className="absolute inset-0 flex items-center justify-center p-2 sm:p-4">
+                            <div className="text-center text-white bg-black/80 rounded-lg sm:rounded-xl p-4 sm:p-6 max-w-xs sm:max-w-sm mx-2">
+                              <RiQrScanLine className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-primary" />
+                              <p className="text-sm sm:text-lg font-medium mb-2">
                                 {cameraPermissionDenied
                                   ? "Permissão da câmera necessária"
                                   : "Problema com a câmera"}
                               </p>
                               {cameraPermissionDenied && (
-                                <p className="text-sm text-white/80 mb-4">
+                                <p className="text-xs sm:text-sm text-white/80 mb-3 sm:mb-4 px-2">
                                   Permita o acesso à câmera no navegador para
                                   continuar
                                 </p>
                               )}
                               {cameraError && !cameraPermissionDenied && (
                                 <>
-                                  <p className="text-sm text-white/80 mb-4">
+                                  <p className="text-xs sm:text-sm text-white/80 mb-3 sm:mb-4 px-2">
                                     {cameraError}
                                   </p>
                                   <button
                                     onClick={resetCamera}
-                                    className="px-6 py-3 bg-primary hover:bg-primary/90 text-white text-sm rounded-lg transition-colors font-medium"
+                                    className="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
                                   >
-                                    <RiQrScanLine className="inline h-4 w-4 mr-2" />
-                                    Reiniciar Scanner
+                                    <RiQrScanLine className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                    <span className="hidden xs:inline">Reiniciar Scanner</span>
+                                    <span className="xs:hidden">Reiniciar</span>
                                   </button>
                                 </>
                               )}
@@ -140,7 +170,12 @@ export const ComandaIdentification = ({
                             onScan={handleScan}
                             onError={onQrError}
                             constraints={{
-                              facingMode: "environment",
+                              deviceId: selectedCameraId
+                                ? { exact: selectedCameraId }
+                                : undefined,
+                              facingMode: selectedCameraId
+                                ? undefined
+                                : "environment",
                             }}
                             styles={{
                               container: {
@@ -158,20 +193,22 @@ export const ComandaIdentification = ({
                       </div>
 
                       <div className="text-center">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
-                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                          <span className="text-primary font-medium text-sm">
-                            Aponte para o QR code
+                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse"></div>
+                          <span className="text-primary font-medium text-xs sm:text-sm">
+                            <span className="hidden xs:inline">Aponte para o QR code</span>
+                            <span className="xs:hidden">Aponte para o QR</span>
                           </span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       <div className="text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
+                        <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
                           <RiKeyboardLine className="h-3 w-3" />
-                          Digite o número da comanda
+                          <span className="hidden xs:inline">Digite o número da comanda</span>
+                          <span className="xs:hidden">Digite o número</span>
                         </div>
                       </div>
                       <div className="flex gap-2 w-full">
@@ -181,7 +218,7 @@ export const ComandaIdentification = ({
                           value={comandaNumber}
                           onChange={(e) => setComandaNumber(e.target.value)}
                           disabled={validatingComanda}
-                          className="text-lg text-center py-3 flex-1 border-2 focus:border-primary transition-colors"
+                          className="text-base sm:text-lg text-center py-2.5 sm:py-3 flex-1 border-2 focus:border-primary transition-colors min-h-[44px] sm:min-h-[48px]"
                           onKeyPress={(e) =>
                             e.key === "Enter" &&
                             !validatingComanda &&
@@ -192,17 +229,18 @@ export const ComandaIdentification = ({
                           size="sm"
                           onClick={onManualInput}
                           disabled={validatingComanda}
-                          className="px-4 py-3 touch-button touch-optimized bg-primary hover:bg-primary/90 shadow-lg"
+                          className="px-3 sm:px-4 py-2.5 sm:py-3 touch-button touch-optimized bg-primary hover:bg-primary/90 shadow-lg min-h-[44px] sm:min-h-[48px] min-w-[44px] sm:min-w-[48px]"
                         >
                           {validatingComanda ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           ) : (
-                            <RiCheckLine className="h-5 w-5" />
+                            <RiCheckLine className="h-4 w-4 sm:h-5 sm:w-5" />
                           )}
                         </Button>
                       </div>
-                      <div className="text-center text-xs text-muted-foreground">
-                        Digite o número da sua comanda
+                      <div className="text-center text-xs text-muted-foreground px-2">
+                        <span className="hidden xs:inline">Digite o número da sua comanda</span>
+                        <span className="xs:hidden">Digite o número da comanda</span>
                       </div>
                     </div>
                   )}
@@ -210,14 +248,14 @@ export const ComandaIdentification = ({
               </div>
 
               {comandaNumber && (
-                <div className="text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+                <div className="text-center px-2">
+                  <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full">
                     {validatingComanda ? (
-                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                     ) : (
-                      <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse"></div>
                     )}
-                    <span className="text-primary font-semibold text-sm">
+                    <span className="text-primary font-semibold text-xs sm:text-sm">
                       {validatingComanda
                         ? "Validando comanda #" + comandaNumber
                         : "Comanda #" + comandaNumber + " identificada"}
