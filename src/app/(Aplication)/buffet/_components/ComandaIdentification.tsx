@@ -191,7 +191,9 @@ export const ComandaIdentification = ({
                                     >
                                       Verificar Permissões
                                     </button>
-                                    {cameraError.includes("Failed to allocate videosource") && (
+                                    {cameraError.includes(
+                                      "Failed to allocate videosource"
+                                    ) && (
                                       <button
                                         onClick={retryCameraAccess}
                                         className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
