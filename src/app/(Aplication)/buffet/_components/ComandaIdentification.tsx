@@ -29,6 +29,7 @@ interface ComandaIdentificationProps {
   selectedCameraId: string;
   getCurrentCameraName: () => string;
   onToggleCamera: () => void;
+  onCheckPermissions: () => Promise<boolean>;
 }
 
 export const ComandaIdentification = ({
@@ -47,6 +48,7 @@ export const ComandaIdentification = ({
   selectedCameraId,
   getCurrentCameraName,
   onToggleCamera,
+  onCheckPermissions,
 }: ComandaIdentificationProps) => {
   // Função para lidar com os códigos detectados
   const handleScan = (detectedCodes: IDetectedBarcode[]) => {
@@ -145,26 +147,49 @@ export const ComandaIdentification = ({
                                   : "Problema com a câmera"}
                               </p>
                               {cameraPermissionDenied && (
-                                <p className="text-xs sm:text-sm text-white/80 mb-3 sm:mb-4 px-2">
-                                  Permita o acesso à câmera no navegador para
-                                  continuar
-                                </p>
+                                <div className="text-xs sm:text-sm text-white/80 mb-3 sm:mb-4 px-2">
+                                  <p className="mb-2">
+                                    <strong>
+                                      Para permitir o acesso à câmera:
+                                    </strong>
+                                  </p>
+                                  <ol className="text-left space-y-1 text-xs">
+                                    <li>
+                                      1. Clique no ícone de cadeado 🔒 na barra
+                                      de endereço
+                                    </li>
+                                    <li>2. Selecione "Permitir" para câmera</li>
+                                    <li>
+                                      3. Recarregue a página se necessário
+                                    </li>
+                                  </ol>
+                                </div>
                               )}
                               {cameraError && !cameraPermissionDenied && (
                                 <>
                                   <p className="text-xs sm:text-sm text-white/80 mb-3 sm:mb-4 px-2">
                                     {cameraError}
                                   </p>
-                                  <button
-                                    onClick={resetCamera}
-                                    className="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
-                                  >
-                                    <RiQrScanLine className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                    <span className="hidden xs:inline">
-                                      Reiniciar Scanner
-                                    </span>
-                                    <span className="xs:hidden">Reiniciar</span>
-                                  </button>
+                                  <div className="flex flex-col sm:flex-row gap-2">
+                                    <button
+                                      onClick={resetCamera}
+                                      className="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
+                                    >
+                                      <RiQrScanLine className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                      <span className="hidden xs:inline">
+                                        Reiniciar Scanner
+                                      </span>
+                                      <span className="xs:hidden">
+                                        Reiniciar
+                                      </span>
+                                    </button>
+                                    <button
+                                      onClick={onCheckPermissions}
+                                      className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
+                                    >
+                                      Verificar Permissões
+                                    </button>
+                                  </div>
                                 </>
                               )}
                             </div>

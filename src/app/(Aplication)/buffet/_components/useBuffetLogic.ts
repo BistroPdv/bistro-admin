@@ -46,6 +46,7 @@ export const useBuffetLogic = () => {
   const [isCreatingOrder, setIsCreatingOrder] = useState<boolean>(false);
   const [isFormFactorMobile, setIsFormFactorMobile] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
+  const [lastProcessedComanda, setLastProcessedComanda] = useState<string>("");
 
   // Hook para obter dispositivos de câmera disponíveis
   const devices = useDevices();
@@ -218,20 +219,56 @@ export const useBuffetLogic = () => {
     if (isQrMode) {
       setCameraError("");
       setCameraPermissionDenied(false);
+
+      // Verifica permissões de câmera quando ativa o modo QR
+      const checkPermissions = async () => {
+        await checkCameraPermissions();
+      };
+
+      // Delay para permitir que o componente seja renderizado
+      setTimeout(checkPermissions, 100);
     }
   }, [isQrMode]);
 
+  // Effect para limpar comandaNumber após um tempo se não for válida
+  useEffect(() => {
+    if (comandaNumber && !validatingComanda && !isComandaSet) {
+      const timer = setTimeout(() => {
+        setComandaNumber("");
+      }, 5000); // 5 segundos para tentar novamente
+
+      return () => clearTimeout(timer);
+    }
+  }, [comandaNumber, validatingComanda, isComandaSet]);
+
   // Função para lidar com o resultado do QR scanner
   const handleQrResult = async (result: string) => {
+    // Só evita processar se estiver validando a mesma comanda no momento
+    if (comandaNumber === result && validatingComanda) {
+      return;
+    }
+
     setComandaNumber(result);
     setCameraError("");
     setCameraPermissionDenied(false);
 
-    const isValid = await validateComanda(result);
-    if (isValid) {
-      setIsComandaSet(true);
-    } else {
-      setComandaNumber("");
+    try {
+      const isValid = await validateComanda(result);
+      if (isValid) {
+        setIsComandaSet(true);
+        setLastProcessedComanda(result); // Marca como processada com sucesso
+      } else {
+        // Limpa o número da comanda após um delay para permitir nova leitura
+        setTimeout(() => {
+          setComandaNumber("");
+        }, 2000); // 2 segundos de delay
+      }
+    } catch (error) {
+      console.error("Erro ao processar QR code:", error);
+      // Limpa o número da comanda após um delay para permitir nova leitura
+      setTimeout(() => {
+        setComandaNumber("");
+      }, 2000);
     }
   };
 
@@ -239,48 +276,146 @@ export const useBuffetLogic = () => {
   const handleQrError = (error: any) => {
     console.error("QR Scanner error:", error);
 
+    // Ignora erros normais de não detecção de QR code
+    const errorMsg = error?.message || error?.toString() || "";
+    if (
+      errorMsg.includes("No QR code found") ||
+      errorMsg.includes("No barcode detected") ||
+      errorMsg.includes("No barcodes detected")
+    ) {
+      return; // Não mostra erro para detecções normais
+    }
+
+    // Tratamento específico para erros de permissão
     if (
       error?.message?.includes("Permission denied") ||
       error?.message?.includes("NotAllowedError") ||
-      error?.name === "NotAllowedError"
+      error?.name === "NotAllowedError" ||
+      error?.message?.includes("Permission denied by user") ||
+      error?.message?.includes("User denied permission")
     ) {
       setCameraPermissionDenied(true);
       setCameraError(
-        "Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador."
+        "Permissão de câmera negada. Clique no ícone de cadeado na barra de endereço e permita o acesso à câmera."
       );
-      toast.error("Permissão da câmera necessária");
+      toast.error(
+        "Permissão da câmera necessária - Verifique as configurações do navegador"
+      );
       return;
     }
 
+    // Tratamento para câmera não encontrada
     if (
       error?.message?.includes("NotFoundError") ||
-      error?.name === "NotFoundError"
+      error?.name === "NotFoundError" ||
+      error?.message?.includes("No camera found")
     ) {
-      setCameraError("Câmera não encontrada");
+      setCameraError(
+        "Câmera não encontrada. Verifique se há uma câmera conectada."
+      );
       return;
     }
 
+    // Tratamento para problemas de stream
     if (
       error?.message?.includes("stream") ||
       error?.message?.includes("Stream") ||
-      error?.message?.includes("Camera access denied")
+      error?.message?.includes("Camera access denied") ||
+      error?.message?.includes("OverconstrainedError") ||
+      error?.message?.includes("ConstraintNotSatisfiedError")
     ) {
-      setCameraError("Problema com o stream da câmera. Tente novamente.");
+      setCameraError(
+        "Problema com o stream da câmera. Tente reiniciar o scanner."
+      );
       return;
     }
 
-    const errorMsg = error?.message || error?.toString() || "Erro na leitura";
-    if (errorMsg && !errorMsg.includes("No QR code found")) {
+    // Tratamento para erros de HTTPS/SSL
+    if (
+      error?.message?.includes("NotSupportedError") ||
+      error?.message?.includes("NotSupported") ||
+      error?.message?.includes("secure context")
+    ) {
+      setCameraError(
+        "Acesso à câmera requer HTTPS. Verifique se o site está sendo servido com SSL."
+      );
+      return;
+    }
+
+    // Tratamento para erros de dispositivo ocupado
+    if (
+      error?.message?.includes("DevicesInUse") ||
+      error?.message?.includes("device in use")
+    ) {
+      setCameraError(
+        "Câmera está sendo usada por outro aplicativo. Feche outros aplicativos que usam a câmera."
+      );
+      return;
+    }
+
+    // Para outros erros, apenas loga mas não trava o scanner
+    if (errorMsg) {
       console.log("Camera error occurred:", errorMsg);
-      setCameraError(`Erro na câmera: ${errorMsg}`);
+      // Não define cameraError para erros menores que podem ser temporários
+    }
+  };
+
+  // Função para verificar e solicitar permissões de câmera
+  const checkCameraPermissions = async () => {
+    try {
+      // Verifica se a API está disponível
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError(
+          "Acesso à câmera não suportado neste navegador ou contexto não seguro (HTTPS necessário)"
+        );
+        return false;
+      }
+
+      // Verifica permissões existentes
+      if (navigator.permissions) {
+        const permissionStatus = await navigator.permissions.query({
+          name: "camera" as PermissionName,
+        });
+        console.log("Camera permission status:", permissionStatus.state);
+
+        if (permissionStatus.state === "denied") {
+          setCameraPermissionDenied(true);
+          setCameraError(
+            "Permissão de câmera negada. Clique no ícone de cadeado na barra de endereço e permita o acesso à câmera."
+          );
+          return false;
+        }
+      }
+
+      // Tenta acessar a câmera para verificar permissões
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+      // Se chegou até aqui, as permissões estão OK
+      stream.getTracks().forEach((track) => track.stop()); // Para o stream de teste
+      setCameraError("");
+      setCameraPermissionDenied(false);
+      return true;
+    } catch (error: any) {
+      console.error("Camera permission check failed:", error);
+      handleQrError(error);
+      return false;
     }
   };
 
   // Reset de câmara quando necessário
-  const resetCamera = () => {
+  const resetCamera = async () => {
     console.log("Resetting camera...");
     setCameraError("");
     setCameraPermissionDenied(false);
+
+    // Verifica permissões antes de resetar
+    await checkCameraPermissions();
   };
 
   // Função para alternar entre câmeras disponíveis
@@ -459,6 +594,10 @@ export const useBuffetLogic = () => {
     setIsComandaSet(false);
     setCart([]);
     setShowCart(false);
+    setLastProcessedComanda(""); // Limpa a última comanda processada
+    // Limpa erros de câmera para permitir nova leitura
+    setCameraError("");
+    setCameraPermissionDenied(false);
   };
 
   // Função para validar se a comanda existe na API
@@ -537,6 +676,7 @@ export const useBuffetLogic = () => {
     handleQrResult,
     handleQrError,
     toggleCamera,
+    checkCameraPermissions,
     saveCategoryOrder,
     loadCategoryOrder,
     validateComanda,

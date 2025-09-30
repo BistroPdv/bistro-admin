@@ -47,6 +47,7 @@ export default function BuffetPage() {
     handleQrResult,
     handleQrError,
     toggleCamera,
+    checkCameraPermissions,
   } = useBuffetLogic();
 
   // Função para lidar com o fim do drag
@@ -88,6 +89,7 @@ export default function BuffetPage() {
         selectedCameraId={selectedCameraId}
         getCurrentCameraName={getCurrentCameraName}
         onToggleCamera={toggleCamera}
+        onCheckPermissions={checkCameraPermissions}
       />
     );
   }
