@@ -1,7 +1,7 @@
 import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import api from "@/lib/api";
-import { checkWasmSupport, loadWasmFiles, setupZXing } from "@/lib/zxing-setup";
+import { checkWasmSupport } from "@/lib/zxing-setup";
 import { useQuery } from "@tanstack/react-query";
 import { useDevices } from "@yudiel/react-qr-scanner";
 import { AxiosResponse } from "axios";
@@ -215,9 +215,9 @@ export const useBuffetLogic = () => {
     ensureWebRTCSetup();
   }, []);
 
-  // Configuração do ZXing WASM para produção
+  // Verificação de suporte WASM para produção
   useEffect(() => {
-    const setupZXingForProduction = async () => {
+    const checkWasmForProduction = async () => {
       if (typeof window === "undefined") return;
 
       try {
@@ -230,26 +230,16 @@ export const useBuffetLogic = () => {
           return;
         }
 
-        // Tenta carregar arquivos WASM
-        const wasmLoaded = await loadWasmFiles();
-        if (!wasmLoaded) {
-          console.warn("Falha ao carregar arquivos WASM");
-        }
-
-        // Configura ZXing
-        const reader = await setupZXing();
-        if (reader) {
-          console.log("ZXing configurado com sucesso");
-        } else {
-          console.warn("Falha ao configurar ZXing");
-        }
+        console.log("WASM suportado - Scanner QR deve funcionar corretamente");
       } catch (error) {
-        console.error("Erro na configuração do ZXing:", error);
-        setCameraError("Erro ao inicializar o scanner. Recarregue a página.");
+        console.error("Erro na verificação de WASM:", error);
+        setCameraError(
+          "Erro ao verificar suporte do navegador. Recarregue a página."
+        );
       }
     };
 
-    setupZXingForProduction();
+    checkWasmForProduction();
   }, []);
 
   // Efect para resetear erros de câmera quando modo QR muda
