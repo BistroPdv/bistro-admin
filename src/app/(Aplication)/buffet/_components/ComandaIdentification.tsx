@@ -111,7 +111,9 @@ export const ComandaIdentification = ({
                       <div className="text-center">
                         <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
                           <RiQrScanLine className="h-3 w-3" />
-                          <span className="hidden xs:inline">Scanner QR Code Ativo</span>
+                          <span className="hidden xs:inline">
+                            Scanner QR Code Ativo
+                          </span>
                           <span className="xs:hidden">Scanner Ativo</span>
                         </div>
                         {devices && devices.length > 1 && (
@@ -158,7 +160,9 @@ export const ComandaIdentification = ({
                                     className="px-4 sm:px-6 py-2 sm:py-3 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm rounded-lg transition-colors font-medium min-h-[40px] sm:min-h-[44px]"
                                   >
                                     <RiQrScanLine className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                    <span className="hidden xs:inline">Reiniciar Scanner</span>
+                                    <span className="hidden xs:inline">
+                                      Reiniciar Scanner
+                                    </span>
                                     <span className="xs:hidden">Reiniciar</span>
                                   </button>
                                 </>
@@ -196,7 +200,9 @@ export const ComandaIdentification = ({
                         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full">
                           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse"></div>
                           <span className="text-primary font-medium text-xs sm:text-sm">
-                            <span className="hidden xs:inline">Aponte para o QR code</span>
+                            <span className="hidden xs:inline">
+                              Aponte para o QR code
+                            </span>
                             <span className="xs:hidden">Aponte para o QR</span>
                           </span>
                         </div>
@@ -207,7 +213,9 @@ export const ComandaIdentification = ({
                       <div className="text-center">
                         <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-muted rounded-full text-muted-foreground text-xs font-medium">
                           <RiKeyboardLine className="h-3 w-3" />
-                          <span className="hidden xs:inline">Digite o número da comanda</span>
+                          <span className="hidden xs:inline">
+                            Digite o número da comanda
+                          </span>
                           <span className="xs:hidden">Digite o número</span>
                         </div>
                       </div>
@@ -239,8 +247,12 @@ export const ComandaIdentification = ({
                         </Button>
                       </div>
                       <div className="text-center text-xs text-muted-foreground px-2">
-                        <span className="hidden xs:inline">Digite o número da sua comanda</span>
-                        <span className="xs:hidden">Digite o número da comanda</span>
+                        <span className="hidden xs:inline">
+                          Digite o número da sua comanda
+                        </span>
+                        <span className="xs:hidden">
+                          Digite o número da comanda
+                        </span>
                       </div>
                     </div>
                   )}
