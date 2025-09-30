@@ -29,10 +29,6 @@ export default function BuffetPage() {
     setShowCategoryOrderModal,
     cameraError,
     cameraPermissionDenied,
-    cameraInitializing,
-    isScannerActive,
-    isCameraReady,
-    scannerRef,
     isLoading,
     validatingComanda,
     isCreatingOrder,
@@ -45,6 +41,8 @@ export default function BuffetPage() {
     handleFinalizeOrder,
     resetComanda,
     resetCamera,
+    handleQrResult,
+    handleQrError,
   } = useBuffetLogic();
 
   // Função para lidar com o fim do drag
@@ -78,12 +76,10 @@ export default function BuffetPage() {
         onManualInput={handleManualInput}
         cameraError={cameraError}
         cameraPermissionDenied={cameraPermissionDenied}
-        cameraInitializing={cameraInitializing}
-        isScannerActive={isScannerActive}
-        isCameraReady={isCameraReady}
-        scannerRef={scannerRef}
         resetCamera={resetCamera}
         validatingComanda={validatingComanda}
+        onQrResult={handleQrResult}
+        onQrError={handleQrError}
       />
     );
   }

@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RiCheckLine, RiKeyboardLine, RiQrScanLine } from "@remixicon/react";
+import { Scanner } from "@yudiel/react-qr-scanner";
+
+import { IDetectedBarcode } from "@yudiel/react-qr-scanner";
 
 interface ComandaIdentificationProps {
   isQrMode: boolean;
@@ -13,12 +16,10 @@ interface ComandaIdentificationProps {
   onManualInput: () => void;
   cameraError: string;
   cameraPermissionDenied: boolean;
-  cameraInitializing: boolean;
-  isScannerActive: boolean;
-  isCameraReady: boolean;
-  scannerRef: React.RefObject<HTMLDivElement | null>;
   resetCamera: () => void;
   validatingComanda?: boolean;
+  onQrResult: (result: string) => void;
+  onQrError: (error: any) => void;
 }
 
 export const ComandaIdentification = ({
@@ -29,11 +30,19 @@ export const ComandaIdentification = ({
   onManualInput,
   cameraError,
   cameraPermissionDenied,
-  isScannerActive,
-  scannerRef,
   resetCamera,
   validatingComanda,
+  onQrResult,
+  onQrError,
 }: ComandaIdentificationProps) => {
+  // Função para lidar com os códigos detectados
+  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
+    if (detectedCodes && detectedCodes.length > 0) {
+      // Pega o primeiro código detectado
+      const firstCode = detectedCodes[0];
+      onQrResult(firstCode.rawValue);
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 flex items-start justify-center px-4 py-4">
@@ -127,24 +136,24 @@ export const ComandaIdentification = ({
                             </div>
                           </div>
                         ) : (
-                          <>
-                            {/* Loading indicator mais sutil */}
-                            {!isScannerActive && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center text-white">
-                                  <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-                                  <p className="text-sm font-medium">
-                                    Iniciando scanner...
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            <div
-                              ref={scannerRef}
-                              id="qr-reader"
-                              className="absolute inset-0 w-full"
-                            />
-                          </>
+                          <Scanner
+                            onScan={handleScan}
+                            onError={onQrError}
+                            constraints={{
+                              facingMode: "environment",
+                            }}
+                            styles={{
+                              container: {
+                                width: "100%",
+                                height: "100%",
+                              },
+                              video: {
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              },
+                            }}
+                          />
                         )}
                       </div>
 
@@ -152,9 +161,7 @@ export const ComandaIdentification = ({
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
                           <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                           <span className="text-primary font-medium text-sm">
-                            {isScannerActive
-                              ? "Aponte para o QR code"
-                              : "Aguarde..."}
+                            Aponte para o QR code
                           </span>
                         </div>
                       </div>

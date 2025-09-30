@@ -3,12 +3,7 @@ import { Category } from "@/@types/products";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import {
-  Html5QrcodeScanner,
-  Html5QrcodeScanType,
-  Html5QrcodeSupportedFormats,
-} from "html5-qrcode";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export interface CartItem {
@@ -46,13 +41,8 @@ export const useBuffetLogic = () => {
   const [cameraError, setCameraError] = useState<string>("");
   const [cameraPermissionDenied, setCameraPermissionDenied] =
     useState<boolean>(false);
-  const [cameraInitializing, setCameraInitializing] = useState<boolean>(false);
-  const [qrScanner, setQrScanner] = useState<Html5QrcodeScanner | null>(null);
-  const [isScannerActive, setIsScannerActive] = useState<boolean>(false);
-  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [validatingComanda, setValidatingComanda] = useState<boolean>(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState<boolean>(false);
-  const scannerRef = useRef<HTMLDivElement | null>(null);
   const [isFormFactorMobile, setIsFormFactorMobile] = useState(false);
 
   // Estilos para otimizar touch e responsividade
@@ -142,16 +132,6 @@ export const useBuffetLogic = () => {
     return categories;
   };
 
-  const getAspectRatio = () => {
-    // const FOR_MOBILE_ASPECT_RATIO = 4/3;
-    const FOR_MOBILE_ASPECT_RATIO = 16 / 9;
-    const FOR_DESKTOP_ASPECT_RATIO = 4 / 3;
-
-    return isFormFactorMobile
-      ? FOR_MOBILE_ASPECT_RATIO
-      : FOR_DESKTOP_ASPECT_RATIO;
-  };
-
   // Buscar categorias e produtos
   const { data: categories, isLoading } = useQuery<
     AxiosResponse,
@@ -199,189 +179,25 @@ export const useBuffetLogic = () => {
     if (isQrMode) {
       setCameraError("");
       setCameraPermissionDenied(false);
-      setCameraInitializing(false);
-      setTimeout(() => initQrScanner(), 50);
-    } else {
-      stopQrScanner();
     }
   }, [isQrMode]);
 
-  // Backup initialization in case the previous one fails
-  useEffect(() => {
-    if (
-      isQrMode &&
-      !cameraError &&
-      !cameraPermissionDenied &&
-      !isScannerActive
-    ) {
-      const timeoutId = setTimeout(() => {
-        if (isQrMode && !isScannerActive) {
-          initQrScanner();
-        }
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isQrMode, cameraError, cameraPermissionDenied, isScannerActive]);
-
-  // Cleanup para quando desmonta o componente
-  useEffect(() => {
-    return () => {
-      stopQrScanner();
-    };
-  }, []);
-
-  // Função para inicializar o scanner QR
-  const initQrScanner = () => {
-    if (!scannerRef.current || isScannerActive) return;
-
-    try {
-      const checkContainer = () => {
-        const element =
-          scannerRef.current || document.getElementById("qr-reader");
-        if (!element) return false;
-        const rect = element.getBoundingClientRect();
-        return rect.width > 100 && rect.height > 100;
-      };
-
-      if (!checkContainer()) {
-        console.log("Container não está pronto, tentando novamente...");
-        setTimeout(initQrScanner, 100);
-        return;
-      }
-
-      const qrboxFunction = (
-        viewfinderWidth: number,
-        viewfinderHeight: number
-      ) => {
-        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-        const qrboxEdgeSize = Math.floor(minEdge * 0.75);
-        return { width: qrboxEdgeSize, height: qrboxEdgeSize };
-      };
-
-      const config = {
-        fps: 10,
-        qrbox: qrboxFunction,
-        aspectRatio: getAspectRatio(),
-        rememberLastUsedCamera: true,
-        showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
-        defaultZoomValueIfSupported: 1.5,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], // só QR
-      };
-
-      const elementId = "qr-reader";
-
-      if (qrScanner) {
-        try {
-          qrScanner.clear();
-        } catch (e) {
-          console.warn("Erro ao limpar scanner anterior:", e);
-        }
-      }
-
-      const scanner = new Html5QrcodeScanner(elementId, config, false);
-
-      scanner.render(
-        async (decodedText) => {
-          setComandaNumber(decodedText);
-          setCameraError("");
-          setCameraPermissionDenied(false);
-          setIsScannerActive(false);
-
-          try {
-            await scanner.clear();
-          } catch (e) {
-            console.warn("Erro ao limpar scanner:", e);
-          }
-
-          const isValid = await validateComanda(decodedText);
-          if (isValid) setIsComandaSet(true);
-          else setComandaNumber("");
-        },
-        (error: any) => {
-          const errorMsg =
-            typeof error === "string" ? error : error?.message || "";
-
-          // Ignora erros normais de não detecção
-          if (
-            errorMsg.includes("No QR code found") ||
-            errorMsg.includes("multformat readers") ||
-            errorMsg.includes("no multformat readers")
-          )
-            return;
-
-          // Só loga erros críticos
-          console.error("Erro real do scanner:", errorMsg);
-          handleQrScanError(error);
-        }
-      );
-
-      setQrScanner(scanner);
-      setIsScannerActive(true);
-      setIsCameraReady(true);
-      setCameraInitializing(false);
-
-      console.log("Scanner QR ativo e aguardando QR code...");
-    } catch (error) {
-      console.error("Erro ao inicializar scanner:", error);
-      setCameraError("Erro ao inicializar a câmera");
-      setCameraInitializing(false);
-      setIsScannerActive(false);
-    }
-  };
-
-  // Função para parar o scanner QR
-  const stopQrScanner = () => {
-    if (qrScanner) {
-      try {
-        qrScanner.clear();
-      } catch (error) {
-        console.warn("Error clearing scanner:", error);
-        const element =
-          scannerRef.current || document.getElementById("qr-reader");
-        if (element) {
-          element.innerHTML = "";
-        }
-      }
-      setQrScanner(null);
-    }
-    setIsScannerActive(false);
-  };
-
-  // Reset de câmara quando necessário
-  const resetCamera = () => {
-    console.log("Resetting camera...");
-
-    stopQrScanner();
+  // Função para lidar com o resultado do QR scanner
+  const handleQrResult = async (result: string) => {
+    setComandaNumber(result);
     setCameraError("");
     setCameraPermissionDenied(false);
-    setCameraInitializing(true);
 
-    setTimeout(() => {
-      setCameraInitializing(false);
-      if (isQrMode) {
-        initQrScanner();
-      }
-    }, 1000);
+    const isValid = await validateComanda(result);
+    if (isValid) {
+      setIsComandaSet(true);
+    } else {
+      setComandaNumber("");
+    }
   };
 
-  useEffect(() => {
-    // Função para checar se é mobile pelo tamanho da tela
-    const checkMobile = () => {
-      // Você pode ajustar o breakpoint conforme necessário
-      setIsFormFactorMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Função para tratamento de erros do QR scanner html5-qrcode
-  const handleQrScanError = (error: any) => {
+  // Função para lidar com erros do QR scanner
+  const handleQrError = (error: any) => {
     console.error("QR Scanner error:", error);
 
     if (
@@ -402,8 +218,6 @@ export const useBuffetLogic = () => {
       error?.name === "NotFoundError"
     ) {
       setCameraError("Câmera não encontrada");
-      setIsScannerActive(false);
-      stopQrScanner();
       return;
     }
 
@@ -412,43 +226,36 @@ export const useBuffetLogic = () => {
       error?.message?.includes("Stream") ||
       error?.message?.includes("Camera access denied")
     ) {
-      setCameraError(
-        "Problema com o stream da câmera. Toque em 'Tentar Novamente' para continuar."
-      );
-      setIsScannerActive(false);
-      stopQrScanner();
+      setCameraError("Problema com o stream da câmera. Tente novamente.");
       return;
     }
 
     const errorMsg = error?.message || error?.toString() || "Erro na leitura";
-    if (
-      errorMsg?.includes("multformat readers") ||
-      errorMsg?.includes("no multformat readers") ||
-      errorMsg?.includes("unable to detect") ||
-      errorMsg?.includes("No readers available")
-    ) {
-      setCameraError(
-        "Câmera não conseguiu inicializar corretamente. Tente novamente."
-      );
-      setIsScannerActive(false);
-      stopQrScanner();
-
-      setTimeout(() => {
-        if (isQrMode && !isScannerActive) {
-          console.log("Auto-retrying scanner após erro multformat...");
-          initQrScanner();
-        }
-      }, 2000);
-      return;
-    }
-
     if (errorMsg && !errorMsg.includes("No QR code found")) {
       console.log("Camera error occurred:", errorMsg);
       setCameraError(`Erro na câmera: ${errorMsg}`);
-      setIsScannerActive(false);
-      stopQrScanner();
     }
   };
+
+  // Reset de câmara quando necessário
+  const resetCamera = () => {
+    console.log("Resetting camera...");
+    setCameraError("");
+    setCameraPermissionDenied(false);
+  };
+
+  useEffect(() => {
+    // Função para checar se é mobile pelo tamanho da tela
+    const checkMobile = () => {
+      // Você pode ajustar o breakpoint conforme necessário
+      setIsFormFactorMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleManualInput = async () => {
     if (comandaNumber.trim()) {
@@ -635,10 +442,6 @@ export const useBuffetLogic = () => {
     setShowCategoryOrderModal,
     cameraError,
     cameraPermissionDenied,
-    cameraInitializing,
-    isScannerActive,
-    isCameraReady,
-    scannerRef,
     categories,
     isLoading,
     validatingComanda,
@@ -654,8 +457,8 @@ export const useBuffetLogic = () => {
     handleFinalizeOrder,
     resetComanda,
     resetCamera,
-    initQrScanner,
-    stopQrScanner,
+    handleQrResult,
+    handleQrError,
     saveCategoryOrder,
     loadCategoryOrder,
     validateComanda,
