@@ -1,7 +1,11 @@
 import { PaginatedResult } from "@/@types/pagination";
 import { Category } from "@/@types/products";
 import api from "@/lib/api";
-import { checkWasmSupport } from "@/lib/zxing-setup";
+import {
+  configureQRScanner,
+  createWasmFallback,
+} from "@/lib/qr-scanner-config";
+import { checkWasmSupport, configureZXingLocalWasm } from "@/lib/zxing-setup";
 import { useQuery } from "@tanstack/react-query";
 import { useDevices } from "@yudiel/react-qr-scanner";
 import { AxiosResponse } from "axios";
@@ -230,6 +234,15 @@ export const useBuffetLogic = () => {
           return;
         }
 
+        // Configura ZXing para usar arquivos WASM locais
+        configureZXingLocalWasm();
+
+        // Configura o QR Scanner para usar arquivos locais
+        configureQRScanner();
+
+        // Cria fallback para erros de WASM
+        createWasmFallback();
+
         console.log("WASM suportado - Scanner QR deve funcionar corretamente");
       } catch (error) {
         console.error("Erro na verificação de WASM:", error);
@@ -381,6 +394,18 @@ export const useBuffetLogic = () => {
       return;
     }
 
+    // Tratamento específico para erro de alocação de vídeo
+    if (
+      error?.message?.includes("Failed to allocate videosource") ||
+      error?.message?.includes("allocate videosource") ||
+      error?.message?.includes("videosource")
+    ) {
+      setCameraError(
+        "Erro ao acessar a câmera. A câmera pode estar sendo usada por outro aplicativo ou há um problema de permissão. Feche outros aplicativos e tente novamente."
+      );
+      return;
+    }
+
     // Para outros erros, apenas loga mas não trava o scanner
     if (errorMsg) {
       console.log("Camera error occurred:", errorMsg);
@@ -431,6 +456,15 @@ export const useBuffetLogic = () => {
       return true;
     } catch (error: any) {
       console.error("Camera permission check failed:", error);
+
+      // Tratamento específico para erro de alocação de vídeo
+      if (error?.message?.includes("Failed to allocate videosource")) {
+        setCameraError(
+          "Erro ao acessar a câmera. A câmera pode estar sendo usada por outro aplicativo. Feche outros aplicativos que usam a câmera e tente novamente."
+        );
+        return false;
+      }
+
       handleQrError(error);
       return false;
     }
@@ -444,6 +478,26 @@ export const useBuffetLogic = () => {
 
     // Verifica permissões antes de resetar
     await checkCameraPermissions();
+  };
+
+  // Função para tentar reiniciar a câmera após erro de alocação
+  const retryCameraAccess = async () => {
+    console.log("Retrying camera access...");
+    setCameraError("");
+
+    // Aguarda um pouco antes de tentar novamente
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Tenta verificar permissões novamente
+    const success = await checkCameraPermissions();
+
+    if (success) {
+      console.log("Camera access retry successful");
+    } else {
+      console.log("Camera access retry failed");
+    }
+
+    return success;
   };
 
   // Função para alternar entre câmeras disponíveis
@@ -701,6 +755,7 @@ export const useBuffetLogic = () => {
     handleFinalizeOrder,
     resetComanda,
     resetCamera,
+    retryCameraAccess,
     handleQrResult,
     handleQrError,
     toggleCamera,

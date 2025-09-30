@@ -44,6 +44,7 @@ export default function BuffetPage() {
     handleFinalizeOrder,
     resetComanda,
     resetCamera,
+    retryCameraAccess,
     handleQrResult,
     handleQrError,
     toggleCamera,
@@ -82,6 +83,7 @@ export default function BuffetPage() {
         cameraError={cameraError}
         cameraPermissionDenied={cameraPermissionDenied}
         resetCamera={resetCamera}
+        retryCameraAccess={retryCameraAccess}
         validatingComanda={validatingComanda}
         onQrResult={handleQrResult}
         onQrError={handleQrError}
