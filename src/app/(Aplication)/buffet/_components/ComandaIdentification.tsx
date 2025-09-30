@@ -195,29 +195,39 @@ export const ComandaIdentification = ({
                             </div>
                           </div>
                         ) : (
-                          <Scanner
-                            onScan={handleScan}
-                            onError={onQrError}
-                            constraints={{
-                              deviceId: selectedCameraId
-                                ? { exact: selectedCameraId }
-                                : undefined,
-                              facingMode: selectedCameraId
-                                ? undefined
-                                : "environment",
-                            }}
-                            styles={{
-                              container: {
-                                width: "100%",
-                                height: "100%",
-                              },
-                              video: {
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              },
-                            }}
-                          />
+                          <div className="w-full h-full">
+                            <Scanner
+                              onScan={handleScan}
+                              onError={onQrError}
+                              constraints={{
+                                deviceId: selectedCameraId
+                                  ? { exact: selectedCameraId }
+                                  : undefined,
+                                facingMode: selectedCameraId
+                                  ? undefined
+                                  : "environment",
+                              }}
+                              styles={{
+                                container: {
+                                  width: "100%",
+                                  height: "100%",
+                                },
+                                video: {
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                },
+                              }}
+                            />
+                            {/* Fallback para quando WASM não carregar */}
+                            <div className="absolute bottom-2 right-2 text-xs text-white/60">
+                              {cameraError.includes("WASM") && (
+                                <div className="bg-red-500/80 px-2 py-1 rounded text-white text-xs">
+                                  WASM não carregado
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
 
