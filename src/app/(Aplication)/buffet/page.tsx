@@ -33,7 +33,6 @@ export default function BuffetPage() {
     isScannerActive,
     isCameraReady,
     scannerRef,
-    categories,
     isLoading,
     validatingComanda,
     isCreatingOrder,

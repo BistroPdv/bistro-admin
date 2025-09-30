@@ -3,7 +3,7 @@ import { Category } from "@/@types/products";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,6 +49,7 @@ export const useBuffetLogic = () => {
   const [validatingComanda, setValidatingComanda] = useState<boolean>(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState<boolean>(false);
   const scannerRef = useRef<HTMLDivElement | null>(null);
+  const [isFormFactorMobile, setIsFormFactorMobile] = useState(false);
 
   // Estilos para otimizar touch e responsividade
   useEffect(() => {
@@ -135,6 +136,16 @@ export const useBuffetLogic = () => {
       console.error("Erro ao carregar ordenação das categorias:", error);
     }
     return categories;
+  };
+
+  const getAspectRatio = () => {
+    // const FOR_MOBILE_ASPECT_RATIO = 4/3;
+    const FOR_MOBILE_ASPECT_RATIO = 16 / 9;
+    const FOR_DESKTOP_ASPECT_RATIO = 4 / 3;
+
+    return isFormFactorMobile
+      ? FOR_MOBILE_ASPECT_RATIO
+      : FOR_DESKTOP_ASPECT_RATIO;
   };
 
   // Buscar categorias e produtos
@@ -236,44 +247,47 @@ export const useBuffetLogic = () => {
         return;
       }
 
-      const config = {
-        fps: 2,
-        qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
-          const validWidth = Math.max(viewfinderWidth || 250, 150);
-          const validHeight = Math.max(viewfinderHeight || 250, 150);
+      const qrboxFunction = (
+        viewfinderWidth: number,
+        viewfinderHeight: number
+      ) => {
+        return { width: viewfinderWidth, height: viewfinderHeight };
 
-          const isMobile =
-            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-              navigator.userAgent
-            );
+        // Square QR Box, with size = 80% of the min edge.
+        const minEdgeSizeThreshold = 250;
+        const edgeSizePercentage = 0.75;
 
-          let minEdgePercentage = 0.6;
-          let qrboxSize = 250;
-
-          if (!isMobile) {
-            minEdgePercentage = 0.7;
-            qrboxSize = 300;
+        const minEdgeSize =
+          viewfinderWidth > viewfinderHeight
+            ? viewfinderHeight
+            : viewfinderWidth;
+        const qrboxEdgeSize = Math.floor(minEdgeSize * edgeSizePercentage);
+        if (qrboxEdgeSize < minEdgeSizeThreshold) {
+          if (minEdgeSize < minEdgeSizeThreshold) {
+            return { width: minEdgeSize, height: minEdgeSize };
+          } else {
+            return {
+              width: minEdgeSizeThreshold,
+              height: minEdgeSizeThreshold,
+            };
           }
+        }
+        return { width: qrboxEdgeSize, height: qrboxEdgeSize };
+      };
 
-          const minEdgeSize = Math.min(validWidth, validHeight);
-          const calculatedSize = Math.floor(
-            Math.max(minEdgeSize * minEdgePercentage, qrboxSize)
-          );
-
-          return {
-            width: Math.min(calculatedSize, validWidth * 0.9),
-            height: Math.min(calculatedSize, validHeight * 0.9),
-          };
-        },
-        aspectRatio: 1.0,
-        videoConstraints: {
-          width: { min: 300, ideal: 640, max: 1280 },
-          height: { min: 200, ideal: 480, max: 960 },
-          facingMode: "environment",
-        },
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: false,
-        },
+      const config = {
+        fps: 10,
+        qrbox: qrboxFunction,
+        useBarCodeDetectorIfSupported: true,
+        rememberLastUsedCamera: true,
+        aspectRatio: getAspectRatio(),
+        showTorchButtonIfSupported: true,
+        showZoomSliderIfSupported: true,
+        defaultZoomValueIfSupported: 1.5,
+        supportedScanTypes: [
+          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+          Html5QrcodeScanType.SCAN_TYPE_FILE,
+        ],
       };
 
       const elementId = "qr-reader";
@@ -290,7 +304,6 @@ export const useBuffetLogic = () => {
 
       scanner.render(
         async (decodedText) => {
-          console.log("QR Code detectado:", decodedText);
           setComandaNumber(decodedText);
           setCameraError("");
           setCameraPermissionDenied(false);
@@ -379,6 +392,19 @@ export const useBuffetLogic = () => {
       }
     }, 1000);
   };
+
+  useEffect(() => {
+    // Função para checar se é mobile pelo tamanho da tela
+    const checkMobile = () => {
+      // Você pode ajustar o breakpoint conforme necessário
+      setIsFormFactorMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Função para tratamento de erros do QR scanner html5-qrcode
   const handleQrScanError = (error: any) => {
@@ -643,7 +669,8 @@ export const useBuffetLogic = () => {
     isLoading,
     validatingComanda,
     isCreatingOrder,
-
+    isFormFactorMobile,
+    setIsFormFactorMobile,
     // Funções
     handleManualInput,
     handleAddToCart,
