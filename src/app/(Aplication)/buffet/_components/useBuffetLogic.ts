@@ -3,7 +3,11 @@ import { Category } from "@/@types/products";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
+import {
+  Html5QrcodeScanner,
+  Html5QrcodeScanType,
+  Html5QrcodeSupportedFormats,
+} from "html5-qrcode";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -236,7 +240,6 @@ export const useBuffetLogic = () => {
         const element =
           scannerRef.current || document.getElementById("qr-reader");
         if (!element) return false;
-
         const rect = element.getBoundingClientRect();
         return rect.width > 100 && rect.height > 100;
       };
@@ -251,43 +254,21 @@ export const useBuffetLogic = () => {
         viewfinderWidth: number,
         viewfinderHeight: number
       ) => {
-        return { width: viewfinderWidth, height: viewfinderHeight };
-
-        // Square QR Box, with size = 80% of the min edge.
-        const minEdgeSizeThreshold = 250;
-        const edgeSizePercentage = 0.75;
-
-        const minEdgeSize =
-          viewfinderWidth > viewfinderHeight
-            ? viewfinderHeight
-            : viewfinderWidth;
-        const qrboxEdgeSize = Math.floor(minEdgeSize * edgeSizePercentage);
-        if (qrboxEdgeSize < minEdgeSizeThreshold) {
-          if (minEdgeSize < minEdgeSizeThreshold) {
-            return { width: minEdgeSize, height: minEdgeSize };
-          } else {
-            return {
-              width: minEdgeSizeThreshold,
-              height: minEdgeSizeThreshold,
-            };
-          }
-        }
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxEdgeSize = Math.floor(minEdge * 0.75);
         return { width: qrboxEdgeSize, height: qrboxEdgeSize };
       };
 
       const config = {
         fps: 10,
         qrbox: qrboxFunction,
-        useBarCodeDetectorIfSupported: true,
-        rememberLastUsedCamera: true,
         aspectRatio: getAspectRatio(),
+        rememberLastUsedCamera: true,
         showTorchButtonIfSupported: true,
         showZoomSliderIfSupported: true,
         defaultZoomValueIfSupported: 1.5,
-        supportedScanTypes: [
-          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-          Html5QrcodeScanType.SCAN_TYPE_FILE,
-        ],
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], // só QR
       };
 
       const elementId = "qr-reader";
@@ -308,40 +289,32 @@ export const useBuffetLogic = () => {
           setCameraError("");
           setCameraPermissionDenied(false);
           setIsScannerActive(false);
+
           try {
-            scanner.clear();
+            await scanner.clear();
           } catch (e) {
             console.warn("Erro ao limpar scanner:", e);
           }
 
-          // Validar a comanda antes de definir como selecionada
           const isValid = await validateComanda(decodedText);
-          if (isValid) {
-            setIsComandaSet(true);
-          } else {
-            setComandaNumber("");
-          }
+          if (isValid) setIsComandaSet(true);
+          else setComandaNumber("");
         },
         (error: any) => {
           const errorMsg =
             typeof error === "string" ? error : error?.message || "";
 
+          // Ignora erros normais de não detecção
           if (
-            errorMsg &&
-            !errorMsg.includes("No QR code found") &&
-            !errorMsg.includes("NotFoundException") &&
-            !errorMsg.includes("QR code not found") &&
-            !errorMsg.includes("multformat readers") &&
-            !errorMsg.includes("no multformat readers")
-          ) {
-            console.log("Erro não crítico de scanner:", errorMsg);
-            handleQrScanError(error);
-          } else if (
-            errorMsg?.includes("multformat readers") ||
-            errorMsg?.includes("no multformat readers")
-          ) {
-            console.warn("Erro multformat readers detectado - ignorando erro");
-          }
+            errorMsg.includes("No QR code found") ||
+            errorMsg.includes("multformat readers") ||
+            errorMsg.includes("no multformat readers")
+          )
+            return;
+
+          // Só loga erros críticos
+          console.error("Erro real do scanner:", errorMsg);
+          handleQrScanError(error);
         }
       );
 
@@ -349,6 +322,7 @@ export const useBuffetLogic = () => {
       setIsScannerActive(true);
       setIsCameraReady(true);
       setCameraInitializing(false);
+
       console.log("Scanner QR ativo e aguardando QR code...");
     } catch (error) {
       console.error("Erro ao inicializar scanner:", error);
