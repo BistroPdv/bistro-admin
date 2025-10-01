@@ -54,6 +54,10 @@ export default function Page() {
       return response;
     },
     select: (resp) => resp.data,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados considerados frescos
+    gcTime: 10 * 60 * 1000, // 10 minutos - tempo de limpeza do cache
+    refetchOnWindowFocus: false, // Evita refetch automático ao focar na janela
+    refetchOnMount: false, // Evita refetch ao montar o componente se já tem dados
   });
 
   const createProductMutation = useMutation({
@@ -81,7 +85,10 @@ export default function Page() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+      refetch(); // Força refetch manual para garantir atualização
       setIsDialogOpen(false);
     },
     onError: (error) => {
@@ -124,7 +131,10 @@ export default function Page() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+      refetch(); // Força refetch manual para garantir atualização
       setIsDialogOpen(false);
       setEditingProduct(null);
     },
@@ -151,7 +161,10 @@ export default function Page() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+      refetch(); // Força refetch manual para garantir atualização
       toast.success("Ordem dos produtos atualizada com sucesso!");
     },
     onError: (error) => {
