@@ -353,10 +353,10 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
       // Garantir que o campo ativo seja enviado
       data.ativo = data.ativo ?? true;
 
-      // Remover o campo impressoraId se estiver vazio ou "none"
-      if (!data.impressoraId || data.impressoraId === "none") {
-        const { impressoraId, ...dataWithoutPrinter } = data;
-        data = dataWithoutPrinter as CategoryFormValues;
+      // Garantir que o campo impressoraId seja sempre enviado
+      // Se não houver impressora selecionada, enviar undefined
+      if (!data.impressoraId) {
+        data.impressoraId = undefined;
       }
 
       // Garantir que os campos ativo dos adicionais estejam presentes
@@ -457,10 +457,7 @@ export function CategoryForm({ category, onRefresh }: CategoryFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Impressora</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma impressora" />
