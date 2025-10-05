@@ -1,12 +1,11 @@
 "use client";
 
-import { PrinterForm } from "@/components/printer-form";
+import { PrinterFormModal } from "@/components/printer-form-modal";
 import PrintersTable from "@/components/printers-table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
 import { Printer, PrinterFormValues } from "@/schemas/printer-schema";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { PlusCircle, PrinterIcon } from "lucide-react";
 import { useState } from "react";
@@ -15,10 +14,9 @@ import { toast } from "sonner";
 export default function PrintersPage() {
   const local = localStorage.getItem("user");
   const cnpj = JSON.parse(local || "");
-  const [showForm, setShowForm] = useState(false);
-  const [editingPrinter, setEditingPrinter] = useState<Printer | undefined>(
-    undefined
-  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPrinter, setEditingPrinter] = useState<Printer | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     data: printers,
@@ -29,10 +27,12 @@ export default function PrintersPage() {
     queryKey: ["printers"],
     queryFn: () => api.get(`/printers`),
     select: (res) => res.data,
+    staleTime: 0, // Força sempre buscar dados frescos
+    gcTime: 0, // Remove cache imediatamente
   });
 
-  const handleAddPrinter = async (data: PrinterFormValues) => {
-    try {
+  const createPrinterMutation = useMutation({
+    mutationFn: async (data: PrinterFormValues) => {
       const newPrinter: Printer = {
         id: data.id,
         nome: data.nome,
@@ -40,49 +40,89 @@ export default function PrintersPage() {
         porta: Number(data.porta),
         restaurantCnpj: cnpj.restaurantCnpj,
       };
+
       if (data.id) {
-        const resp = await api.put(`/printers/${data.id}`, newPrinter);
-        if (resp.status === 200) {
-          toast.success("Impressora atualizada com sucesso");
-          refetch();
-        }
+        return api.put(`/printers/${data.id}`, newPrinter);
       } else {
-        const resp = await api.post(`/printers`, newPrinter);
-        if (resp.status === 201) {
-          toast.success("Impressora criada com sucesso");
-          refetch();
-        }
+        return api.post(`/printers`, newPrinter);
       }
-      setShowForm(false);
-      setEditingPrinter(undefined);
-    } catch (error) {
+    },
+    onSuccess: async (_, variables) => {
+      // Múltiplas estratégias para garantir atualização
+      queryClient.invalidateQueries({ queryKey: ["printers"] });
+      queryClient.refetchQueries({ queryKey: ["printers"] });
+      await refetch();
+
+      // Força re-render da tabela
+      setTimeout(() => {
+        refetch();
+      }, 100);
+
+      setIsModalOpen(false);
+      setEditingPrinter(null);
+      toast.success(
+        variables.id
+          ? "Impressora atualizada com sucesso"
+          : "Impressora criada com sucesso"
+      );
+    },
+    onError: (error) => {
       if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message);
+        toast.error(
+          error.response?.data.message || "Erro ao processar impressora"
+        );
       } else {
-        toast.error("Erro ao criar impressora");
+        toast.error("Erro ao processar impressora");
       }
-    }
+    },
+  });
+
+  const deletePrinterMutation = useMutation({
+    mutationFn: async (printerId: string) => {
+      return api.delete(`/printers/${printerId}`);
+    },
+    onSuccess: async () => {
+      // Múltiplas estratégias para garantir atualização
+      queryClient.invalidateQueries({ queryKey: ["printers"] });
+      queryClient.refetchQueries({ queryKey: ["printers"] });
+      await refetch();
+
+      // Força re-render da tabela
+      setTimeout(() => {
+        refetch();
+      }, 100);
+
+      toast.success("Impressora excluída com sucesso");
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        toast.error(
+          error.response?.data.message || "Erro ao excluir impressora"
+        );
+      } else {
+        toast.error("Erro ao excluir impressora");
+      }
+    },
+  });
+
+  const handleAddNewPrinter = () => {
+    setEditingPrinter(null);
+    setIsModalOpen(true);
   };
 
   const handleEditPrinter = (printer: Printer) => {
     setEditingPrinter(printer);
-    setShowForm(true);
+    setIsModalOpen(true);
   };
 
-  const handleDeletePrinter = async (printerId?: string) => {
-    try {
-      const resp = await api.delete(`/printers/${printerId}`);
-      if (resp.status === 200) {
-        toast.success("Impressora excluída com sucesso");
-        refetch();
-      }
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message);
-      } else {
-        toast.error("Erro ao excluir impressora");
-      }
+  const handleDeletePrinter = (printerId?: string) => {
+    if (printerId) {
+      deletePrinterMutation.mutate(printerId);
     }
+  };
+
+  const handleSubmit = (data: PrinterFormValues) => {
+    createPrinterMutation.mutate(data);
   };
 
   if (error) {
@@ -96,43 +136,25 @@ export default function PrintersPage() {
           <PrinterIcon className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Impressoras de Rede</h1>
         </div>
-        {!showForm && (
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Nova Impressora
-          </Button>
-        )}
+        <Button onClick={handleAddNewPrinter} className="gap-2">
+          <PlusCircle className="h-4 w-4" />
+          Nova Impressora
+        </Button>
       </div>
 
-      {showForm ? (
-        <Card className="mb-6">
-          <CardHeader className="bg-muted/50">
-            <CardTitle>
-              {editingPrinter ? "Editar Impressora" : "Nova Impressora"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <PrinterForm onSubmit={handleAddPrinter} printer={editingPrinter} />
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingPrinter(undefined);
-                }}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
       <PrintersTable
-        printers={printers?.data || []}
+        printers={printers?.data || printers || []}
         loading={isLoading}
         onEditPrinter={handleEditPrinter}
         onDeletePrinter={handleDeletePrinter}
+      />
+
+      <PrinterFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        printer={editingPrinter || undefined}
+        loading={createPrinterMutation.isPending}
       />
     </div>
   );
