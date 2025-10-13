@@ -8,7 +8,7 @@ import {
 import { checkWasmSupport, configureZXingLocalWasm } from "@/lib/zxing-setup";
 import { useQuery } from "@tanstack/react-query";
 import { useDevices } from "@yudiel/react-qr-scanner";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -23,6 +23,7 @@ export interface CartItem {
 export interface OrderItem {
   produtoId: string;
   quantidade: number;
+  nomeProduto: string;
   precoUnitario: number;
 }
 
@@ -629,8 +630,11 @@ export const useBuffetLogic = () => {
       const itens = cart.map((item) => ({
         produtoId: item.id,
         quantidade: item.quantidade,
+        nomeProduto: item.nome,
         precoUnitario: item.preco,
       }));
+
+      console.log(itens);
 
       const orderData: CreateOrderRequest = {
         comandaId: comandaId,
@@ -638,6 +642,16 @@ export const useBuffetLogic = () => {
         total: getTotalPrice(),
         observacoes: undefined, // Pode ser implementado no futuro
       };
+
+      const printer = await axios.post(
+        `http://192.168.3.3:5572/api/printer/send-printer/cooking`,
+        {
+          id: "7e1f0481-16be-49a2-9cf6-4582748db8d4",
+          mesa: "I",
+          comanda: String(comandaNumber),
+          itens: orderData.itens,
+        }
+      );
 
       const response = await api.post("/pedidos", orderData);
 
@@ -692,6 +706,7 @@ export const useBuffetLogic = () => {
       if (response.data && response.data.ativo !== false) {
         // Armazenar o ID da comanda retornado pela API
         setComandaId(response.data.id);
+        setComandaNumber(response.data.numero);
         toast.success(`Comanda ${numeroComanda} validada com sucesso!`);
         return true;
       } else {
