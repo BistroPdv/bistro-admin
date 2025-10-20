@@ -8,7 +8,7 @@ import {
 import { checkWasmSupport, configureZXingLocalWasm } from "@/lib/zxing-setup";
 import { useQuery } from "@tanstack/react-query";
 import { useDevices } from "@yudiel/react-qr-scanner";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -29,9 +29,8 @@ export interface OrderItem {
 
 export interface CreateOrderRequest {
   comandaId: string;
-  itens: OrderItem[];
-  total: number;
-  observacoes?: string;
+  produtos: OrderItem[];
+  observacoes?: string | undefined;
 }
 
 export const useBuffetLogic = () => {
@@ -627,31 +626,40 @@ export const useBuffetLogic = () => {
 
     try {
       // Converter carrinho para o formato de order items
-      const itens = cart.map((item) => ({
+      const produtos = cart.map((item) => ({
         produtoId: item.id,
         quantidade: item.quantidade,
         nomeProduto: item.nome,
         precoUnitario: item.preco,
       }));
 
-      console.log(itens);
+      console.log("Produtos do pedido:", produtos);
 
       const orderData: CreateOrderRequest = {
         comandaId: comandaId,
-        itens: itens,
-        total: getTotalPrice(),
-        observacoes: undefined, // Pode ser implementado no futuro
+        produtos: produtos,
       };
 
-      const printer = await axios.post(
-        `http://192.168.3.3:5572/api/printer/send-printer/cooking`,
-        {
-          id: "7e1f0481-16be-49a2-9cf6-4582748db8d4",
-          mesa: "I",
-          comanda: String(comandaNumber),
-          itens: orderData.itens,
-        }
+      // Remove observacoes do tipo se estiver undefined
+      if (orderData.observacoes === undefined) {
+        delete orderData.observacoes;
+      }
+
+      console.log(
+        "Dados do pedido que serão enviados:",
+        JSON.stringify(orderData, null, 2)
       );
+      console.log("Total calculado (apenas para referência):", getTotalPrice());
+
+      // const printer = await axios.post(
+      //   `http://192.168.3.3:5572/api/printer/send-printer/cooking`,
+      //   {
+      //     id: "7e1f0481-16be-49a2-9cf6-4582748db8d4",
+      //     mesa: "I",
+      //     comanda: String(comandaNumber),
+      //     itens: orderData.produtos,
+      //   }
+      // );
 
       const response = await api.post("/pedidos", orderData);
 
@@ -664,20 +672,30 @@ export const useBuffetLogic = () => {
       setIsComandaSet(false);
       setShowCart(false);
 
-      console.log("Pedido criado:", response.data);
+      console.log("Pedido criado com sucesso:", response.data);
     } catch (error: any) {
-      console.error("Erro ao criar pedido:", error);
+      console.error("Erro completo ao criar pedido:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+      });
 
       if (error.response?.status === 400) {
-        toast.error(
-          "Dados do pedido inválidos. Verifique os produtos selecionados."
-        );
+        const errorMsg =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Dados do pedido inválidos";
+        toast.error(`Erro 400: ${errorMsg}`);
+        console.error("Detalhes do erro 400:", error.response.data);
       } else if (error.response?.status === 404) {
         toast.error("Comanda não encontrada. Tente validar novamente.");
       } else if (error.response?.status === 401) {
         toast.error("Erro de autorização. Verifique sua sessão.");
       } else {
-        toast.error("Erro ao criar pedido. Tente novamente.");
+        const errorMsg =
+          error.response?.data?.message || "Erro ao criar pedido";
+        toast.error(`${errorMsg}. Tente novamente.`);
       }
     } finally {
       setIsCreatingOrder(false);

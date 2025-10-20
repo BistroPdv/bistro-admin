@@ -236,7 +236,6 @@ export function CompanySettingsForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      console.log(data);
       const banners = data.banners || [];
       delete data.banners;
       const resp = await api.putForm("/settings", {
@@ -274,16 +273,14 @@ export function CompanySettingsForm() {
       const pdvIntegration = apiData.pdvIntegrations || "OMIE";
       setIntegrationType(pdvIntegration);
 
-      console.log(apiData);
-
       // Resetar formulário com dados da API
       const formData = {
         name: apiData.name || "",
         email: apiData.email || "",
         phone: apiData.phone || "",
         pdvIntegrations: pdvIntegration,
-        printerNotification: apiData.printerNotification.id || "none",
-        printerBill: apiData.printerBill.id || "none",
+        printerNotification: apiData?.printerNotification?.id ?? "none",
+        printerBill: apiData?.printerBill?.id ?? "none",
         omieAppKey: apiData.integrationOmie?.omie_key || "",
         omieSecretKey: apiData.integrationOmie?.omie_secret || "",
         adminPassword: apiData.adminPassword || "",
@@ -306,7 +303,9 @@ export function CompanySettingsForm() {
 
       setIsInitialDataLoaded(true);
       setIsFormReady(true);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }, [configEnterprise.data, isInitialDataLoaded, form, logoPreview]);
 
   // Effect para carregar dados quando a API estiver pronta
@@ -841,7 +840,6 @@ export function CompanySettingsForm() {
                                       e: React.ChangeEvent<HTMLInputElement>
                                     ) => {
                                       const value = e.currentTarget.value;
-                                      console.log(value);
                                       field.onChange(Number(value));
                                     }}
                                     type="number"
